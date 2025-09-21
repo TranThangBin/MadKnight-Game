@@ -1,12 +1,7 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/ScriptableObjects.meta
-guid: e1c974eebbf24a6b98b9870d086e092d
-folderAsset: yes
-========
-guid: 06f71dedeaeae07339e06d8acbb3052d
->>>>>>>> 37cdc4c (feat: player controller):Assets/Scenes/Sandbox.unity.meta
+guid: a00f675b4c81baef592263c74228294b
 DefaultImporter:
   externalObjects: {}
-  userData:
-  assetBundleName:
-  assetBundleVariant:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6ebaadc10ee0547ca9d093535819070, type: 3}
+  m_Script: {fileID: 11500000, guid: bdc2cd0b9c1e0503a8decee40dec62b7, type: 3}
   m_Name: PlayerStatsSO
   m_EditorClassIdentifier: MadKnight::MadKnight.ScriptableObjects.PlayerStatsSO
   <Speed>k__BackingField: 20
-  <JumpForce>k__BackingField: 8
-  <CrouchSpeedMultiplier>k__BackingField: 0.3
+  <JumpForce>k__BackingField: 12
+  <CrouchSpeedMultiplier>k__BackingField: 0.5

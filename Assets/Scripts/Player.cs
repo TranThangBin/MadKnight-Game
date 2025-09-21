@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using MadKnight.ScriptableObjects;
 using MadKnight.Enums;
@@ -58,6 +59,7 @@ namespace MadKnight
                     {
                         _state = PlayerState.Airborne;
                     }
+
                     break;
                 case PlayerState.Walking:
                     if (_horizontalAxis == 0)
@@ -76,16 +78,19 @@ namespace MadKnight
                     {
                         _state = PlayerState.Airborne;
                     }
+
                     break;
                 case PlayerState.Jumping:
                     if (_rb.linearVelocityY != 0)
                     {
                         _state = PlayerState.Airborne;
                     }
+
                     break;
                 case PlayerState.Airborne:
                     if (_isOnFloor)
                     {
+                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                         if (_rb.linearVelocityX == 0)
                         {
                             _state = PlayerState.Idle;
@@ -95,10 +100,12 @@ namespace MadKnight
                             _state = PlayerState.Walking;
                         }
                     }
+
                     break;
                 case PlayerState.Crouching:
                     if (!CrouchCondition())
                     {
+                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                         if (_rb.linearVelocityX == 0)
                         {
                             _state = PlayerState.Idle;
@@ -113,6 +120,7 @@ namespace MadKnight
                         _state = PlayerState.Jumping;
                     }
 
+                    // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                     if (_state == PlayerState.Crouching)
                     {
                         _headCollider.enabled = false;
@@ -121,9 +129,10 @@ namespace MadKnight
                     {
                         _headCollider.enabled = true;
                     }
+
                     break;
                 default:
-                    break;
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -135,20 +144,25 @@ namespace MadKnight
                     _srNormal.gameObject.SetActive(false);
                     _srCrouch.gameObject.SetActive(true);
                     break;
-                default:
+                case PlayerState.Idle:
+                case PlayerState.Walking:
+                case PlayerState.Jumping:
+                case PlayerState.Airborne:
                     _srNormal.gameObject.SetActive(true);
                     _srCrouch.gameObject.SetActive(false);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
         private void FixedUpdate()
         {
             _isOnFloor = Physics2D.Raycast(
-                    _groundCheck.position,
-                    Vector2.up,
-                    Mathf.Abs(_groundCheck.position.y - transform.position.y),
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground)));
+                _groundCheck.position,
+                Vector2.up,
+                Mathf.Abs(_groundCheck.position.y - transform.position.y),
+                LayerMask.GetMask(nameof(LayerMaskEnum.Ground)));
             var moveXVelocity = _playerStats.Speed * _horizontalAxis;
 
             switch (_state)
@@ -161,7 +175,8 @@ namespace MadKnight
                     _rb.linearVelocity = new Vector2(moveXVelocity, _rb.linearVelocityY);
                     break;
                 case PlayerState.Crouching:
-                    _rb.linearVelocity = new Vector2(moveXVelocity * _playerStats.CrouchSpeedMultiplier, _rb.linearVelocityY);
+                    _rb.linearVelocity = new Vector2(
+                        moveXVelocity * _playerStats.CrouchSpeedMultiplier, _rb.linearVelocityY);
                     break;
                 case PlayerState.Idle:
                 default:

@@ -1,12 +1,8 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Resources.meta
-guid: ddd6dc607009ae3659b642453d2c7967
-========
-guid: 522e83a6861d50be0a6fcc62f04b78b0
->>>>>>>> 37cdc4c (feat: player controller):Assets/Scripts/ScriptableObjects.meta
+guid: b9f8dca22ad742d91b55b84befd5699f
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}
-  userData:
-  assetBundleName:
-  assetBundleVariant:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
