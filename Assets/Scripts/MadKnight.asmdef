@@ -1,7 +1,9 @@
 {
     "name": "MadKnight",
     "rootNamespace": "MadKnight",
-    "references": [],
+    "references": [
+        "GUID:c0804ed15043844c0a9296ff2a90b7e0"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
