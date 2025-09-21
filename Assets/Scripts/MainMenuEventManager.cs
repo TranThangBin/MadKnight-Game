@@ -3,9 +3,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace MadKnight.MainMenu
+namespace MadKnight
 {
-    public class EventHandlers : MonoBehaviour
+    public class MainMenuEventManager : MonoBehaviour
     {
         [SerializeField] private Button _btnPlay;
         [SerializeField] private Button _btnContinue;
