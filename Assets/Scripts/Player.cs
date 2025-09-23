@@ -23,6 +23,16 @@ namespace MadKnight
         private bool _isOnFloor;
         private int _jumpRemaining;
         private bool _hasJumped;
+        private bool _hasWallContact;
+                // ...existing code...
+
+                void OnCollisionExit2D(Collision2D collision)
+                {
+                    if (collision.gameObject.layer == LayerMask.NameToLayer(nameof(LayerMaskEnum.Wall)))
+                    {
+                        _hasWallContact = false;
+                    }
+                }
 
         private void Awake()
         {
@@ -30,6 +40,7 @@ namespace MadKnight
 
             _state = PlayerState.Idle;
             _jumpRemaining = _playerStats.MaxJumpCount;
+                _hasWallContact = false;
         }
 
         private void Update()
@@ -108,6 +119,7 @@ namespace MadKnight
                         }
 
                         _jumpRemaining = _playerStats.MaxJumpCount;
+                            _hasWallContact = false;
                     }
 
                     break;
@@ -208,6 +220,27 @@ namespace MadKnight
         private bool CrouchCondition()
         {
             return _isOnFloor && Input.GetButton("Fire1");
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            // Kiểm tra xem có va chạm với Wall layer không
+            if (collision.gameObject.layer == LayerMask.NameToLayer(nameof(LayerMaskEnum.Wall)))
+            {
+                // Kiểm tra xem va chạm có phải từ bên cạnh không (không phải từ trên xuống)
+                Vector2 contactDirection = collision.GetContact(0).normal;
+                
+                // Nếu va chạm từ bên cạnh (normal vector có thành phần x lớn)
+                if (Mathf.Abs(contactDirection.x) > Mathf.Abs(contactDirection.y))
+                {
+                        // Nếu đang ở trạng thái airborne, chưa từng bám tường trong lần này và còn jump
+                        if (_state == PlayerState.Airborne && !_hasWallContact && _jumpRemaining > 0)
+                        {
+                            _jumpRemaining++;
+                            _hasWallContact = true;
+                        }
+                }
+            }
         }
 
         private enum PlayerState
