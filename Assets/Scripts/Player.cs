@@ -14,7 +14,6 @@ namespace MadKnight
         [SerializeField] private SpriteRenderer _srNormal;
         [SerializeField] private SpriteRenderer _srCrouch;
         [SerializeField] private Transform _groundCheck;
-        [SerializeField] private float _groundCastDistance;
 
         private Rigidbody2D _rb;
 
@@ -22,12 +21,15 @@ namespace MadKnight
 
         private float _horizontalAxis;
         private bool _isOnFloor;
+        private int _jumpRemaining;
+        private bool _hasJumped;
 
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
 
             _state = PlayerState.Idle;
+            _jumpRemaining = _playerStats.MaxJumpCount;
         }
 
         private void Update()
@@ -81,14 +83,19 @@ namespace MadKnight
 
                     break;
                 case PlayerState.Jumping:
-                    if (_rb.linearVelocityY != 0)
+                    if (!_isOnFloor && _hasJumped)
                     {
                         _state = PlayerState.Airborne;
+                        _hasJumped = false;
                     }
 
                     break;
                 case PlayerState.Airborne:
-                    if (_isOnFloor)
+                    if (JumpCondition())
+                    {
+                        _state = PlayerState.Jumping;
+                    }
+                    else if (_isOnFloor)
                     {
                         // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                         if (_rb.linearVelocityX == 0)
@@ -99,6 +106,8 @@ namespace MadKnight
                         {
                             _state = PlayerState.Walking;
                         }
+
+                        _jumpRemaining = _playerStats.MaxJumpCount;
                     }
 
                     break;
@@ -168,7 +177,14 @@ namespace MadKnight
             switch (_state)
             {
                 case PlayerState.Jumping:
-                    _rb.AddForce(Vector2.up * _playerStats.JumpForce, ForceMode2D.Impulse);
+                    if (!_hasJumped)
+                    {
+                        _rb.linearVelocity = new Vector2(_rb.linearVelocityX, 0);
+                        _rb.AddForce(Vector2.up * _playerStats.JumpForce, ForceMode2D.Impulse);
+                        _jumpRemaining--;
+                        _hasJumped = true;
+                    }
+
                     break;
                 case PlayerState.Airborne:
                 case PlayerState.Walking:
@@ -186,7 +202,7 @@ namespace MadKnight
 
         private bool JumpCondition()
         {
-            return _isOnFloor && Input.GetButtonDown("Jump");
+            return _jumpRemaining > 0 && Input.GetButtonDown("Jump");
         }
 
         private bool CrouchCondition()
