@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: MadKnight::MadKnight.ScriptableObjects.PlayerStatsSO
   <Speed>k__BackingField: 20
   <JumpForce>k__BackingField: 12
+  <MaxJumpCount>k__BackingField: 2
   <CrouchSpeedMultiplier>k__BackingField: 0.5
