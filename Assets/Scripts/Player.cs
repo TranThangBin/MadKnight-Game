@@ -1,132 +1,156 @@
 using System;
-using UnityEngine;
-using MadKnight.ScriptableObjects;
 using MadKnight.Enums;
+using MadKnight.ScriptableObjects;
+using UnityEngine;
 
 namespace MadKnight
 {
     [RequireComponent(typeof(Rigidbody2D))]
     public class Player : MonoBehaviour
     {
-        [SerializeField] private PlayerStatsSO _playerStats;
+        private enum PlayerState
+        {
+            Idle,
+            Walking,
+            Crouching,
+            Jumping,
+            Airborne,
+            WallSlide,
+        }
+
+        [SerializeField] private PlayerStatsSO _stats;
 
         [SerializeField] private Collider2D _headCollider;
         [SerializeField] private SpriteRenderer _srNormal;
         [SerializeField] private SpriteRenderer _srCrouch;
+        [SerializeField] private Transform _ceilCheck;
         [SerializeField] private Transform _groundCheck;
+        [SerializeField] private Transform _wallCheck;
 
         private Rigidbody2D _rb;
 
         private PlayerState _state;
 
-        private float _horizontalAxis;
-        private bool _isOnFloor;
+        private float _horizontalVelocity;
         private int _jumpRemaining;
         private bool _hasJumped;
-        private bool _hasWallContact;
-                // ...existing code...
-
-                void OnCollisionExit2D(Collision2D collision)
-                {
-                    if (collision.gameObject.layer == LayerMask.NameToLayer(nameof(LayerMaskEnum.Wall)))
-                    {
-                        _hasWallContact = false;
-                    }
-                }
+        private bool _isOnCeil;
+        private bool _isOnFloor;
+        private bool _isOnWall;
 
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
 
             _state = PlayerState.Idle;
-            _jumpRemaining = _playerStats.MaxJumpCount;
-                _hasWallContact = false;
+            _jumpRemaining = _stats.MaxJumpCount;
         }
 
         private void Update()
         {
+            _horizontalVelocity = _stats.Speed * Input.GetAxis("Horizontal");
+
+            if (_horizontalVelocity > 0 && transform.localScale.x != 1)
+            {
+                transform.localScale = new Vector2(1, transform.localScale.y);
+            }
+            else if (_horizontalVelocity < 0 && transform.localScale.x != -1)
+            {
+                transform.localScale = new Vector2(-1, transform.localScale.y);
+            }
+
+
+            Camera.main.transform.position = new Vector3(
+                    transform.position.x,
+                    transform.position.y,
+                    Camera.main.transform.position.z
+            );
+
             HandleStateTransition();
             HandleAnimation();
         }
 
         private void HandleStateTransition()
         {
-            _horizontalAxis = Input.GetAxis("Horizontal");
-
             switch (_state)
             {
                 case PlayerState.Idle:
-                    if (_horizontalAxis != 0)
                     {
-                        _state = PlayerState.Walking;
+                        if (_horizontalVelocity != 0)
+                        {
+                            _state = PlayerState.Walking;
+                        }
+                        else if (CrouchCondition())
+                        {
+                            _state = PlayerState.Crouching;
+                        }
+                        else if (JumpCondition())
+                        {
+                            _state = PlayerState.Jumping;
+                        }
+                        else if (!_isOnFloor)
+                        {
+                            _state = PlayerState.Airborne;
+                        }
                     }
-                    else if (CrouchCondition())
-                    {
-                        _state = PlayerState.Crouching;
-                    }
-                    else if (JumpCondition())
-                    {
-                        _state = PlayerState.Jumping;
-                    }
-                    else if (!_isOnFloor)
-                    {
-                        _state = PlayerState.Airborne;
-                    }
-
                     break;
                 case PlayerState.Walking:
-                    if (_horizontalAxis == 0)
                     {
-                        _state = PlayerState.Idle;
+                        if (_horizontalVelocity == 0)
+                        {
+                            _state = PlayerState.Idle;
+                        }
+                        else if (CrouchCondition())
+                        {
+                            _state = PlayerState.Crouching;
+                        }
+                        else if (JumpCondition())
+                        {
+                            _state = PlayerState.Jumping;
+                        }
+                        else if (!_isOnFloor)
+                        {
+                            _state = PlayerState.Airborne;
+                        }
                     }
-                    else if (CrouchCondition())
-                    {
-                        _state = PlayerState.Crouching;
-                    }
-                    else if (JumpCondition())
-                    {
-                        _state = PlayerState.Jumping;
-                    }
-                    else if (!_isOnFloor)
-                    {
-                        _state = PlayerState.Airborne;
-                    }
-
                     break;
                 case PlayerState.Jumping:
-                    if (!_isOnFloor && _hasJumped)
                     {
-                        _state = PlayerState.Airborne;
-                        _hasJumped = false;
+                        if (!_isOnFloor && _hasJumped)
+                        {
+                            _state = PlayerState.Airborne;
+                            _hasJumped = false;
+                        }
                     }
-
                     break;
                 case PlayerState.Airborne:
-                    if (JumpCondition())
                     {
-                        _state = PlayerState.Jumping;
-                    }
-                    else if (_isOnFloor)
-                    {
-                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                        if (_rb.linearVelocityX == 0)
+                        if (JumpCondition())
                         {
-                            _state = PlayerState.Idle;
+                            _state = PlayerState.Jumping;
                         }
-                        else
+                        else if (_isOnFloor)
                         {
-                            _state = PlayerState.Walking;
+                            if (_rb.linearVelocityX == 0)
+                            {
+                                _state = PlayerState.Idle;
+                            }
+                            else
+                            {
+                                _state = PlayerState.Walking;
+                            }
+
+                            _jumpRemaining = _stats.MaxJumpCount;
                         }
-
-                        _jumpRemaining = _playerStats.MaxJumpCount;
-                            _hasWallContact = false;
+                        else if (_isOnWall)
+                        {
+                            _state = PlayerState.WallSlide;
+                        }
                     }
-
                     break;
                 case PlayerState.Crouching:
-                    if (!CrouchCondition())
+                    if (!_isOnCeil && !CrouchCondition())
                     {
-                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                         if (_rb.linearVelocityX == 0)
                         {
                             _state = PlayerState.Idle;
@@ -136,12 +160,11 @@ namespace MadKnight
                             _state = PlayerState.Walking;
                         }
                     }
-                    else if (JumpCondition())
+                    else if (!_isOnCeil && JumpCondition())
                     {
                         _state = PlayerState.Jumping;
                     }
 
-                    // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                     if (_state == PlayerState.Crouching)
                     {
                         _headCollider.enabled = false;
@@ -151,6 +174,19 @@ namespace MadKnight
                         _headCollider.enabled = true;
                     }
 
+                    break;
+                case PlayerState.WallSlide:
+                    {
+                        if (_isOnFloor)
+                        {
+                            _state = PlayerState.Idle;
+                            _jumpRemaining = _stats.MaxJumpCount;
+                        }
+                        else if (!_isOnWall)
+                        {
+                            _state = PlayerState.Airborne;
+                        }
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -169,6 +205,7 @@ namespace MadKnight
                 case PlayerState.Walking:
                 case PlayerState.Jumping:
                 case PlayerState.Airborne:
+                case PlayerState.WallSlide:
                     _srNormal.gameObject.SetActive(true);
                     _srCrouch.gameObject.SetActive(false);
                     break;
@@ -179,36 +216,75 @@ namespace MadKnight
 
         private void FixedUpdate()
         {
-            _isOnFloor = Physics2D.Raycast(
-                _groundCheck.position,
-                Vector2.up,
-                Mathf.Abs(_groundCheck.position.y - transform.position.y),
-                LayerMask.GetMask(nameof(LayerMaskEnum.Ground)));
-            var moveXVelocity = _playerStats.Speed * _horizontalAxis;
+            _isOnFloor = Physics2D.OverlapCircle(
+                    _groundCheck.position,
+                    0.2f,
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+            );
+            _isOnCeil = Physics2D.OverlapCircle(
+                    _ceilCheck.position,
+                    0.2f,
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+            );
+            _isOnWall = Physics2D.OverlapCircle(
+                    _wallCheck.position,
+                    0.2f,
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+            );
 
+            HandleState();
+        }
+
+        private void HandleState()
+        {
             switch (_state)
             {
                 case PlayerState.Jumping:
-                    if (!_hasJumped)
                     {
-                        _rb.linearVelocity = new Vector2(_rb.linearVelocityX, 0);
-                        _rb.AddForce(Vector2.up * _playerStats.JumpForce, ForceMode2D.Impulse);
-                        _jumpRemaining--;
-                        _hasJumped = true;
+                        if (!_hasJumped)
+                        {
+                            _rb.linearVelocity = new Vector2(_rb.linearVelocityX, 0);
+                            _rb.AddForce(Vector2.up * _stats.JumpForce, ForceMode2D.Impulse);
+                            _jumpRemaining--;
+                            _hasJumped = true;
+                        }
                     }
-
                     break;
                 case PlayerState.Airborne:
                 case PlayerState.Walking:
-                    _rb.linearVelocity = new Vector2(moveXVelocity, _rb.linearVelocityY);
+                    {
+                        if (_horizontalVelocity != 0)
+                        {
+                            _rb.linearVelocity = new Vector2(
+                                    _horizontalVelocity,
+                                    _rb.linearVelocityY
+                            );
+                        }
+                    }
                     break;
                 case PlayerState.Crouching:
-                    _rb.linearVelocity = new Vector2(
-                        moveXVelocity * _playerStats.CrouchSpeedMultiplier, _rb.linearVelocityY);
+                    {
+                        _rb.linearVelocity = new Vector2(
+                                _horizontalVelocity * _stats.CrouchSpeedMultiplier,
+                                _rb.linearVelocityY
+                        );
+                    }
+                    break;
+                case PlayerState.WallSlide:
+                    {
+                        _rb.linearVelocity = new Vector2(
+                                0,
+                                Mathf.Max(
+                                    _rb.linearVelocityY,
+                                    -_stats.WallSlideMaxSpeed
+                                )
+                        );
+                    }
                     break;
                 case PlayerState.Idle:
-                default:
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -220,36 +296,6 @@ namespace MadKnight
         private bool CrouchCondition()
         {
             return _isOnFloor && Input.GetButton("Fire1");
-        }
-
-        private void OnCollisionEnter2D(Collision2D collision)
-        {
-            // Kiểm tra xem có va chạm với Wall layer không
-            if (collision.gameObject.layer == LayerMask.NameToLayer(nameof(LayerMaskEnum.Wall)))
-            {
-                // Kiểm tra xem va chạm có phải từ bên cạnh không (không phải từ trên xuống)
-                Vector2 contactDirection = collision.GetContact(0).normal;
-                
-                // Nếu va chạm từ bên cạnh (normal vector có thành phần x lớn)
-                if (Mathf.Abs(contactDirection.x) > Mathf.Abs(contactDirection.y))
-                {
-                        // Nếu đang ở trạng thái airborne, chưa từng bám tường trong lần này và còn jump
-                        if (_state == PlayerState.Airborne && !_hasWallContact && _jumpRemaining > 0)
-                        {
-                            _jumpRemaining++;
-                            _hasWallContact = true;
-                        }
-                }
-            }
-        }
-
-        private enum PlayerState
-        {
-            Idle,
-            Walking,
-            Crouching,
-            Jumping,
-            Airborne,
         }
     }
 }
