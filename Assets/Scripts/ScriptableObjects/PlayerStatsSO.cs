@@ -10,5 +10,6 @@ namespace MadKnight.ScriptableObjects
         [field: SerializeField] public int MaxJumpCount { get; private set; }
         [field: SerializeField] public float CrouchSpeedMultiplier { get; private set; }
         [field: SerializeField] public float WallSlideMaxSpeed { get; private set; }
+        [field: SerializeField] public float WallBounceForce { get; private set; }
     }
 }

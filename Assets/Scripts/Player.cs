@@ -16,6 +16,7 @@ namespace MadKnight
             Jumping,
             Airborne,
             WallSlide,
+            WallBounce,
         }
 
         [SerializeField] private PlayerStatsSO _stats;
@@ -30,10 +31,12 @@ namespace MadKnight
         private Rigidbody2D _rb;
 
         private PlayerState _state;
+        private PlayerState _prevState;
 
-        private float _horizontalVelocity;
+        private float _horizontalAxis;
         private int _jumpRemaining;
         private bool _hasJumped;
+        private bool _hasWallBounced;
         private bool _isOnCeil;
         private bool _isOnFloor;
         private bool _isOnWall;
@@ -48,23 +51,16 @@ namespace MadKnight
 
         private void Update()
         {
-            _horizontalVelocity = _stats.Speed * Input.GetAxis("Horizontal");
+            _horizontalAxis = Input.GetAxis("Horizontal");
 
-            if (_horizontalVelocity > 0 && transform.localScale.x != 1)
+            if (Camera.main)
             {
-                transform.localScale = new Vector2(1, transform.localScale.y);
+                Camera.main.transform.position = new Vector3(
+                        transform.position.x,
+                        transform.position.y,
+                        Camera.main.transform.position.z
+                );
             }
-            else if (_horizontalVelocity < 0 && transform.localScale.x != -1)
-            {
-                transform.localScale = new Vector2(-1, transform.localScale.y);
-            }
-
-
-            Camera.main.transform.position = new Vector3(
-                    transform.position.x,
-                    transform.position.y,
-                    Camera.main.transform.position.z
-            );
 
             HandleStateTransition();
             HandleAnimation();
@@ -72,19 +68,28 @@ namespace MadKnight
 
         private void HandleStateTransition()
         {
+            var initState = _state;
+
+            bool isJumpClicked, isWallBounceClicked, isCrouchClicked;
+            isJumpClicked = isWallBounceClicked = Input.GetButtonDown("Jump");
+            isCrouchClicked = Input.GetButton("Fire1");
+
+            var crouchable = _isOnFloor && isCrouchClicked;
+            var jumpAble = _jumpRemaining > 0 && isJumpClicked;
+
             switch (_state)
             {
                 case PlayerState.Idle:
                     {
-                        if (_horizontalVelocity != 0)
+                        if (_horizontalAxis != 0)
                         {
                             _state = PlayerState.Walking;
                         }
-                        else if (CrouchCondition())
+                        else if (crouchable)
                         {
                             _state = PlayerState.Crouching;
                         }
-                        else if (JumpCondition())
+                        else if (jumpAble)
                         {
                             _state = PlayerState.Jumping;
                         }
@@ -96,15 +101,15 @@ namespace MadKnight
                     break;
                 case PlayerState.Walking:
                     {
-                        if (_horizontalVelocity == 0)
+                        if (_rb.linearVelocityX == 0)
                         {
                             _state = PlayerState.Idle;
                         }
-                        else if (CrouchCondition())
+                        else if (crouchable)
                         {
                             _state = PlayerState.Crouching;
                         }
-                        else if (JumpCondition())
+                        else if (jumpAble)
                         {
                             _state = PlayerState.Jumping;
                         }
@@ -125,7 +130,7 @@ namespace MadKnight
                     break;
                 case PlayerState.Airborne:
                     {
-                        if (JumpCondition())
+                        if (jumpAble && _prevState != PlayerState.WallBounce)
                         {
                             _state = PlayerState.Jumping;
                         }
@@ -149,7 +154,7 @@ namespace MadKnight
                     }
                     break;
                 case PlayerState.Crouching:
-                    if (!_isOnCeil && !CrouchCondition())
+                    if (!_isOnCeil && !crouchable)
                     {
                         if (_rb.linearVelocityX == 0)
                         {
@@ -160,7 +165,7 @@ namespace MadKnight
                             _state = PlayerState.Walking;
                         }
                     }
-                    else if (!_isOnCeil && JumpCondition())
+                    else if (!_isOnCeil && jumpAble)
                     {
                         _state = PlayerState.Jumping;
                     }
@@ -186,10 +191,28 @@ namespace MadKnight
                         {
                             _state = PlayerState.Airborne;
                         }
+                        else if (isWallBounceClicked)
+                        {
+                            _state = PlayerState.WallBounce;
+                        }
+                    }
+                    break;
+                case PlayerState.WallBounce:
+                    {
+                        if (!_isOnWall && _hasWallBounced)
+                        {
+                            _state = PlayerState.Airborne;
+                            _hasWallBounced = false;
+                        }
                     }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+
+            if (initState != _state)
+            {
+                _prevState = initState;
             }
         }
 
@@ -206,6 +229,7 @@ namespace MadKnight
                 case PlayerState.Jumping:
                 case PlayerState.Airborne:
                 case PlayerState.WallSlide:
+                case PlayerState.WallBounce:
                     _srNormal.gameObject.SetActive(true);
                     _srCrouch.gameObject.SetActive(false);
                     break;
@@ -237,6 +261,12 @@ namespace MadKnight
 
         private void HandleState()
         {
+            var movementSmoothing = 0.1f;
+            var wallBounceYForce = _stats.JumpForce * 1.2f;
+
+            var horizontalXVelocity = _stats.Speed * _horizontalAxis;
+            var direction = transform.localScale.x;
+
             switch (_state)
             {
                 case PlayerState.Jumping:
@@ -244,7 +274,7 @@ namespace MadKnight
                         if (!_hasJumped)
                         {
                             _rb.linearVelocity = new Vector2(_rb.linearVelocityX, 0);
-                            _rb.AddForce(Vector2.up * _stats.JumpForce, ForceMode2D.Impulse);
+                            _rb.AddForceY(_stats.JumpForce, ForceMode2D.Impulse);
                             _jumpRemaining--;
                             _hasJumped = true;
                         }
@@ -253,10 +283,23 @@ namespace MadKnight
                 case PlayerState.Airborne:
                 case PlayerState.Walking:
                     {
-                        if (_horizontalVelocity != 0)
+                        if (_prevState != PlayerState.WallBounce)
                         {
+                            if (horizontalXVelocity > 0 && transform.localScale.x != 1)
+                            {
+                                transform.localScale = new Vector2(1, transform.localScale.y);
+                            }
+                            else if (horizontalXVelocity < 0 && transform.localScale.x != -1)
+                            {
+                                transform.localScale = new Vector2(-1, transform.localScale.y);
+                            }
+
                             _rb.linearVelocity = new Vector2(
-                                    _horizontalVelocity,
+                                    Mathf.Lerp(
+                                        _rb.linearVelocityX,
+                                        horizontalXVelocity,
+                                        movementSmoothing
+                                    ),
                                     _rb.linearVelocityY
                             );
                         }
@@ -265,8 +308,8 @@ namespace MadKnight
                 case PlayerState.Crouching:
                     {
                         _rb.linearVelocity = new Vector2(
-                                _horizontalVelocity * _stats.CrouchSpeedMultiplier,
-                                _rb.linearVelocityY
+                                horizontalXVelocity * _stats.CrouchSpeedMultiplier,
+                                -direction * _rb.linearVelocityY
                         );
                     }
                     break;
@@ -275,10 +318,26 @@ namespace MadKnight
                         _rb.linearVelocity = new Vector2(
                                 0,
                                 Mathf.Max(
-                                    _rb.linearVelocityY,
+                                     _rb.linearVelocityY,
                                     -_stats.WallSlideMaxSpeed
                                 )
                         );
+                    }
+                    break;
+                case PlayerState.WallBounce:
+                    {
+                        if (!_hasWallBounced)
+                        {
+                            _rb.AddForce(
+                                    new Vector2(
+                                       -direction * _stats.WallBounceForce,
+                                       wallBounceYForce
+                                    ),
+                                    ForceMode2D.Impulse
+                            );
+                            transform.localScale = new Vector2(-direction, transform.localScale.y);
+                            _hasWallBounced = true;
+                        }
                     }
                     break;
                 case PlayerState.Idle:
@@ -286,16 +345,6 @@ namespace MadKnight
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-        }
-
-        private bool JumpCondition()
-        {
-            return _jumpRemaining > 0 && Input.GetButtonDown("Jump");
-        }
-
-        private bool CrouchCondition()
-        {
-            return _isOnFloor && Input.GetButton("Fire1");
         }
     }
 }
