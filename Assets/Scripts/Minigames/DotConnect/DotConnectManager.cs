@@ -52,6 +52,13 @@ namespace MiniGames.DotConnect
         private Camera mainCamera;
         private float cellSize;
         
+        // Fallback mechanism
+        private bool isGenerating = false;
+        private float generationStartTime;
+        private const float GENERATION_TIMEOUT = 5.0f; // Timeout 5 giây
+        private int failedAttempts = 0;
+        private const int MAX_FAILED_ATTEMPTS = 3;
+        
         private void Awake()
         {
             mainCamera = Camera.main;
@@ -77,28 +84,132 @@ namespace MiniGames.DotConnect
         /// </summary>
         public void InitializePuzzle()
         {
+            // Kiểm tra nếu đang trong quá trình tạo
+            if (isGenerating)
+            {
+                Debug.LogWarning("Đang trong quá trình tạo puzzle, vui lòng đợi...");
+                return;
+            }
+            
+            isGenerating = true;
+            generationStartTime = Time.realtimeSinceStartup;
+            
+            try
+            {
+                ClearBoard();
+                
+                // Tạo puzzle với timeout
+                dotPairs = GeneratePuzzleWithFallback();
+                
+                if (dotPairs == null || dotPairs.Count == 0)
+                {
+                    Debug.LogError("Không thể tạo puzzle!");
+                    isGenerating = false;
+                    return;
+                }
+                
+                // Khởi tạo bàn cờ
+                board = new int[config.boardWidth, config.boardHeight];
+                
+                // Đánh dấu vị trí các dots
+                foreach (var pair in dotPairs)
+                {
+                    board[pair.startDot.x, pair.startDot.y] = -(pair.pairId + 1); // Dấu âm để phân biệt dot
+                    board[pair.endDot.x, pair.endDot.y] = -(pair.pairId + 1);
+                }
+                
+                // Tạo visual
+                CreateBoardVisual();
+                CreateDotsVisual();
+                
+                onPuzzleStarted?.Invoke();
+                
+                Debug.Log($"Puzzle đã được khởi tạo với {dotPairs.Count} cặp dots");
+                failedAttempts = 0; // Reset failed attempts khi thành công
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Lỗi khi khởi tạo puzzle: {ex.Message}");
+                failedAttempts++;
+                
+                // Nếu thất bại quá nhiều, tạo puzzle đơn giản nhất
+                if (failedAttempts >= MAX_FAILED_ATTEMPTS)
+                {
+                    Debug.LogWarning("Tạo puzzle đơn giản do thất bại nhiều lần...");
+                    CreateEmergencyPuzzle();
+                }
+            }
+            finally
+            {
+                isGenerating = false;
+            }
+        }
+        
+        /// <summary>
+        /// Tạo puzzle với cơ chế fallback
+        /// </summary>
+        private List<DotPair> GeneratePuzzleWithFallback()
+        {
+            List<DotPair> result = null;
+            float startTime = Time.realtimeSinceStartup;
+            
+            try
+            {
+                // Thử tạo với generator chính
+                result = generator.GeneratePuzzle();
+                
+                // Kiểm tra timeout
+                if (Time.realtimeSinceStartup - startTime > GENERATION_TIMEOUT)
+                {
+                    Debug.LogWarning("Timeout khi tạo puzzle! Sử dụng fallback...");
+                    result = generator.GenerateSimplePuzzle();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Lỗi khi tạo puzzle: {ex.Message}. Sử dụng fallback...");
+                result = generator.GenerateSimplePuzzle();
+            }
+            
+            return result;
+        }
+        
+        /// <summary>
+        /// Tạo puzzle cực kỳ đơn giản trong trường hợp khẩn cấp
+        /// </summary>
+        private void CreateEmergencyPuzzle()
+        {
             ClearBoard();
             
-            // Tạo puzzle
-            dotPairs = generator.GeneratePuzzle();
+            dotPairs = new List<DotPair>();
+            
+            // Tạo chỉ 2 cặp dots đơn giản
+            int pairCount = Mathf.Min(2, config.numberOfDotPairs);
+            
+            for (int i = 0; i < pairCount; i++)
+            {
+                GridCell start = new GridCell(0, i);
+                GridCell end = new GridCell(config.boardWidth - 1, i);
+                Color color = config.dotColors[i % config.dotColors.Length];
+                
+                dotPairs.Add(new DotPair(i, start, end, color));
+            }
             
             // Khởi tạo bàn cờ
             board = new int[config.boardWidth, config.boardHeight];
             
-            // Đánh dấu vị trí các dots
             foreach (var pair in dotPairs)
             {
-                board[pair.startDot.x, pair.startDot.y] = -(pair.pairId + 1); // Dấu âm để phân biệt dot
+                board[pair.startDot.x, pair.startDot.y] = -(pair.pairId + 1);
                 board[pair.endDot.x, pair.endDot.y] = -(pair.pairId + 1);
             }
             
-            // Tạo visual
             CreateBoardVisual();
             CreateDotsVisual();
             
             onPuzzleStarted?.Invoke();
             
-            Debug.Log($"Puzzle đã được khởi tạo với {dotPairs.Count} cặp dots");
+            Debug.Log("Đã tạo emergency puzzle với 2 cặp đơn giản");
         }
         
         /// <summary>
@@ -322,6 +433,20 @@ namespace MiniGames.DotConnect
         
         private void Update()
         {
+            // Kiểm tra deadlock trong quá trình tạo puzzle
+            if (isGenerating && Time.realtimeSinceStartup - generationStartTime > GENERATION_TIMEOUT)
+            {
+                Debug.LogError("DEADLOCK DETECTED! Force stopping generation...");
+                isGenerating = false;
+                failedAttempts++;
+                
+                // Tạo emergency puzzle
+                if (dotPairs == null || dotPairs.Count == 0)
+                {
+                    CreateEmergencyPuzzle();
+                }
+            }
+            
             HandleInput();
             
             // Debug: Nhấn D để debug LineRenderer
@@ -334,6 +459,14 @@ namespace MiniGames.DotConnect
             if (Input.GetKeyDown(KeyCode.L))
             {
                 LineRendererMaterialHelper.ListAvailableShaders();
+            }
+            
+            // Debug: Nhấn R để force reset
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                Debug.Log("Force reset puzzle...");
+                isGenerating = false;
+                InitializePuzzle();
             }
         }
         
@@ -493,7 +626,8 @@ namespace MiniGames.DotConnect
             // Đánh dấu đường đi trên board
             foreach (var cell in currentPath)
             {
-                if (board[cell.x, cell.y] == 0 || board[cell.x, cell.y] < 0)
+                // Chỉ ghi đường lên ô trống (không ghi đè lên các dot âm)
+                if (board[cell.x, cell.y] == 0)
                 {
                     board[cell.x, cell.y] = currentPair.pairId + 1;
                 }
@@ -601,9 +735,34 @@ namespace MiniGames.DotConnect
             
             // Có thể đi qua ô trống hoặc ô là dot đích
             GridCell targetDot = currentPath[0] == currentPair.startDot ? currentPair.endDot : currentPair.startDot;
-            
-            return cellValue == 0 || 
-                   (cell == targetDot && cellValue == -(currentPair.pairId + 1));
+
+            // Nếu ô là một dot (âm), chỉ cho phép đi nếu đó là dot đích thuộc cặp hiện tại
+            if (cellValue < 0)
+            {
+                return (cell == targetDot && cellValue == -(currentPair.pairId + 1));
+            }
+
+            // Nếu ô đã có đường của cặp khác (dương), không cho đi
+            if (cellValue > 0)
+            {
+                return false;
+            }
+
+            // Cuối cùng, cho đi nếu ô trống
+            return cellValue == 0;
+        }
+
+        /// <summary>
+        /// Kiểm tra ô có chứa dot (start hoặc end của bất kỳ cặp nào)
+        /// </summary>
+        private bool IsDotCell(GridCell cell)
+        {
+            if (dotPairs == null) return false;
+            foreach (var p in dotPairs)
+            {
+                if (p.startDot == cell || p.endDot == cell) return true;
+            }
+            return false;
         }
         
         private bool IsAdjacentTo(GridCell cell, GridCell other)
@@ -669,7 +828,7 @@ namespace MiniGames.DotConnect
             InitializePuzzle();
         }
     }
-    
+
     /// <summary>
     /// Component gắn vào mỗi dot để nhận diện
     /// </summary>
