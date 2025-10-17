@@ -49,7 +49,7 @@ This project is currently under early development by **RedRat Team**, a student 
 | Role | Member | Description |
 |------|---------|-------------|
 | **Creative Lead / Writer** | Huan | Storyline, direction, and overall world design |
-| **Technical Lead** | [RedRatTeam](https://github.com/RedRatTeam) | Unity engine development, game systems |
+| **Technical Lead** | [RedRatTeam] | Unity engine development, game systems |
 | **Audio Design** | TBD | Original piano and ambient tracks |
 | **Art Direction** | TBD | Character & environment concept |
 
@@ -70,7 +70,7 @@ This project is currently under early development by **RedRat Team**, a student 
 
 ## 🩶 Contact
 
-📧 **RedRatTeam** — [GitHub](https://github.com/RedRatTeam)  
+📧 **RedRatTeam**)  
 💬 *“Even the forgotten stories remember us.”*
 
 ---
