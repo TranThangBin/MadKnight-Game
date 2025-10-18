@@ -292,24 +292,38 @@ namespace MadKnight.UI
         {
             currentSettings.qualityLevel = index;
             QualitySettings.SetQualityLevel(index);
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         private void OnResolutionChanged(int index)
         {
             Resolution resolution = resolutions[index];
             Screen.SetResolution(resolution.width, resolution.height, Screen.fullScreen);
+            
+            // Lưu vào settings
+            currentSettings.resolutionWidth = resolution.width;
+            currentSettings.resolutionHeight = resolution.height;
+            currentSettings.Save();
         }
         
         private void OnFullscreenChanged(bool value)
         {
             currentSettings.fullscreen = value;
             Screen.fullScreen = value;
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         private void OnVSyncChanged(bool value)
         {
             currentSettings.vsync = value;
             QualitySettings.vSyncCount = value ? 1 : 0;
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         private void OnFPSLimitChanged(int index)
@@ -317,6 +331,9 @@ namespace MadKnight.UI
             int targetFPS = GetFPSFromDropdownIndex(index);
             currentSettings.targetFPS = targetFPS;
             Application.targetFrameRate = targetFPS;
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         private void OnBrightnessChanged(float value)
@@ -328,6 +345,9 @@ namespace MadKnight.UI
             }
             // Apply brightness to post-processing or camera
             ApplyBrightness(value);
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         #endregion
@@ -341,18 +361,36 @@ namespace MadKnight.UI
             {
                 masterVolumeText.text = Mathf.RoundToInt(value * 100) + "%";
             }
-            // Apply to AudioMixer
+            // Apply ngay lập tức
             AudioManager.Instance?.SetMasterVolume(value);
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         private void OnMusicVolumeChanged(float value)
         {
+            Debug.Log($"[SettingsPanel] OnMusicVolumeChanged: {value:F2}");
+            
             currentSettings.musicVolume = value;
             if (musicVolumeText != null)
             {
                 musicVolumeText.text = Mathf.RoundToInt(value * 100) + "%";
             }
-            AudioManager.Instance?.SetMusicVolume(value);
+            
+            // Check AudioManager
+            if (AudioManager.Instance == null)
+            {
+                Debug.LogError("[SettingsPanel] AudioManager.Instance is NULL!");
+            }
+            else
+            {
+                Debug.Log($"[SettingsPanel] Calling AudioManager.SetMusicVolume({value:F2})");
+                AudioManager.Instance.SetMusicVolume(value);
+            }
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         private void OnSFXVolumeChanged(float value)
@@ -362,7 +400,11 @@ namespace MadKnight.UI
             {
                 sfxVolumeText.text = Mathf.RoundToInt(value * 100) + "%";
             }
+            // Apply ngay lập tức
             AudioManager.Instance?.SetSFXVolume(value);
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         private void OnAmbienceVolumeChanged(float value)
@@ -372,7 +414,11 @@ namespace MadKnight.UI
             {
                 ambienceVolumeText.text = Mathf.RoundToInt(value * 100) + "%";
             }
+            // Apply ngay lập tức
             AudioManager.Instance?.SetAmbienceVolume(value);
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         #endregion
@@ -386,11 +432,17 @@ namespace MadKnight.UI
             {
                 mouseSensitivityText.text = value.ToString("F1");
             }
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         private void OnInvertYAxisChanged(bool value)
         {
             currentSettings.invertYAxis = value;
+            
+            // Auto save
+            currentSettings.Save();
         }
         
         #endregion
@@ -399,8 +451,10 @@ namespace MadKnight.UI
         
         private void OnApplyClicked()
         {
-            currentSettings.Save();
-            Debug.Log("Settings saved!");
+            // Settings đã được auto-save khi thay đổi
+            // Chỉ cần đóng panel
+            Debug.Log("Settings applied and saved!");
+            Hide();
         }
         
         private void OnResetClicked()
@@ -408,6 +462,7 @@ namespace MadKnight.UI
             currentSettings = GameSettings.GetDefault();
             ApplySettingsToUI();
             currentSettings.ApplyAll();
+            currentSettings.Save();
             Debug.Log("Settings reset to default!");
         }
         

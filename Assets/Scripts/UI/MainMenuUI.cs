@@ -32,12 +32,20 @@ namespace MadKnight.UI
         [SerializeField] private float buttonsFadeInDuration = 1f;
         [SerializeField] private float delayBetweenElements = 0.5f;
         
-        [Header("Background")]
-        [SerializeField] private AudioSource backgroundMusic;
+        [Header("Background Music")]
+        [SerializeField] private AudioClip introMusicClip;  // Clip phát 1 lần đầu tiên
+        [SerializeField] private AudioClip backgroundMusicClip;  // Clip loop sau khi intro hết
         [SerializeField] private float musicFadeInDuration = 3f;
+        [SerializeField] private float crossfadeDuration = 2f;  // Thời gian chuyển từ intro sang loop
+        
+        private AudioSource introMusicSource;
+        private AudioSource backgroundMusicSource;
         
         private void Start()
         {
+            // Khởi tạo AudioManager nếu chưa có
+            EnsureAudioManager();
+            
             // Khởi tạo alpha = 0 cho tất cả
             SetAlpha(titleText, 0);
             SetAlpha(subtitleText, 0);
@@ -50,11 +58,32 @@ namespace MadKnight.UI
             // Bắt đầu animation fade in
             StartCoroutine(FadeInSequence());
             
-            // Fade in background music
-            if (backgroundMusic != null)
+            // Fade in music với intro -> background loop
+            StartCoroutine(PlayMusicSequence());
+        }
+        
+        /// <summary>
+        /// Đảm bảo có AudioManager trong scene
+        /// </summary>
+        private void EnsureAudioManager()
+        {
+            if (AudioManager.Instance == null)
             {
-                StartCoroutine(FadeInMusic());
+                Debug.Log("[MainMenuUI] AudioManager not found, creating new instance...");
+                GameObject audioManagerGO = new GameObject("AudioManager");
+                audioManagerGO.AddComponent<AudioManager>();
+                Debug.Log("[MainMenuUI] Created AudioManager instance");
             }
+            else
+            {
+                Debug.Log("[MainMenuUI] AudioManager instance already exists");
+            }
+            
+            // Load và apply settings
+            GameSettings settings = GameSettings.Load();
+            Debug.Log($"[MainMenuUI] Loaded settings - Music Volume: {settings.musicVolume:F2}");
+            settings.ApplyAll();
+            Debug.Log("[MainMenuUI] Applied all settings");
         }
         
         private void CheckSaveFileStatus()
@@ -126,19 +155,129 @@ namespace MadKnight.UI
         
         private IEnumerator FadeInMusic()
         {
+            if (AudioManager.Instance == null || backgroundMusicClip == null) yield break;
+            
             float elapsed = 0f;
-            float targetVolume = backgroundMusic.volume;
-            backgroundMusic.volume = 0f;
-            backgroundMusic.Play();
+            float targetVolume = GameSettings.Load().musicVolume;
+            
+            // Phát music qua AudioManager
+            AudioManager.Instance.PlayMusic(backgroundMusicClip, true, 0f);
             
             while (elapsed < musicFadeInDuration)
             {
                 elapsed += Time.deltaTime;
-                backgroundMusic.volume = Mathf.Lerp(0f, targetVolume, elapsed / musicFadeInDuration);
+                float volume = Mathf.Lerp(0f, targetVolume, elapsed / musicFadeInDuration);
+                AudioManager.Instance.SetMusicVolume(volume);
                 yield return null;
             }
             
-            backgroundMusic.volume = targetVolume;
+            AudioManager.Instance.SetMusicVolume(targetVolume);
+        }
+        
+        /// <summary>
+        /// Phát music theo trình tự: Intro (1 lần) -> Background (loop)
+        /// </summary>
+        private IEnumerator PlayMusicSequence()
+        {
+            if (AudioManager.Instance == null)
+            {
+                Debug.LogWarning("[MainMenuUI] AudioManager not found!");
+                yield break;
+            }
+            
+            GameSettings settings = GameSettings.Load();
+            float targetVolume = settings.musicVolume;
+            
+            // Nếu không có intro, chỉ phát background loop
+            if (introMusicClip == null)
+            {
+                if (backgroundMusicClip != null)
+                {
+                    yield return StartCoroutine(FadeInMusic());
+                }
+                yield break;
+            }
+            
+            // Tạo AudioSource tạm cho intro
+            GameObject tempGO = new GameObject("IntroMusic");
+            introMusicSource = tempGO.AddComponent<AudioSource>();
+            introMusicSource.clip = introMusicClip;
+            introMusicSource.loop = false;
+            introMusicSource.volume = 0f;
+            introMusicSource.Play();
+            
+            // Fade in intro
+            float elapsed = 0f;
+            while (elapsed < musicFadeInDuration)
+            {
+                elapsed += Time.deltaTime;
+                introMusicSource.volume = Mathf.Lerp(0f, targetVolume, elapsed / musicFadeInDuration);
+                yield return null;
+            }
+            introMusicSource.volume = targetVolume;
+            
+            // Chờ intro gần hết (trừ đi thời gian crossfade)
+            float introDuration = introMusicClip.length;
+            float waitTime = introDuration - crossfadeDuration;
+            
+            if (waitTime > 0)
+            {
+                yield return new WaitForSeconds(waitTime);
+            }
+            
+            // Crossfade: Intro fade out, Background fade in
+            if (backgroundMusicClip != null)
+            {
+                // Bắt đầu phát background
+                AudioManager.Instance.PlayMusic(backgroundMusicClip, true, 0f);
+                
+                elapsed = 0f;
+                while (elapsed < crossfadeDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = elapsed / crossfadeDuration;
+                    
+                    // Fade out intro
+                    if (introMusicSource != null)
+                    {
+                        introMusicSource.volume = Mathf.Lerp(targetVolume, 0f, t);
+                    }
+                    
+                    // Fade in background
+                    float bgVolume = Mathf.Lerp(0f, targetVolume, t);
+                    AudioManager.Instance.SetMusicVolume(bgVolume);
+                    
+                    yield return null;
+                }
+                
+                // Hoàn tất
+                if (introMusicSource != null)
+                {
+                    introMusicSource.Stop();
+                    Destroy(introMusicSource.gameObject);
+                }
+                AudioManager.Instance.SetMusicVolume(targetVolume);
+            }
+            else
+            {
+                // Không có background music, chỉ fade out intro
+                elapsed = 0f;
+                while (elapsed < crossfadeDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    if (introMusicSource != null)
+                    {
+                        introMusicSource.volume = Mathf.Lerp(targetVolume, 0f, elapsed / crossfadeDuration);
+                    }
+                    yield return null;
+                }
+                
+                if (introMusicSource != null)
+                {
+                    introMusicSource.Stop();
+                    Destroy(introMusicSource.gameObject);
+                }
+            }
         }
         
         private void SetAlpha(TextMeshProUGUI text, float alpha)

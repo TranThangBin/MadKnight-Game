@@ -6,6 +6,7 @@ namespace MadKnight.UI
     /// <summary>
     /// Audio Manager - Quản lý âm thanh toàn game
     /// Singleton pattern
+    /// QUAN TRỌNG: Điều khiển TẤT CẢ AudioSource trong scene, không chỉ của riêng nó
     /// </summary>
     public class AudioManager : MonoBehaviour
     {
@@ -18,6 +19,12 @@ namespace MadKnight.UI
         [SerializeField] private AudioSource musicSource;
         [SerializeField] private AudioSource sfxSource;
         [SerializeField] private AudioSource ambienceSource;
+        
+        [Header("Volume Control (when no AudioMixer)")]
+        [Tooltip("Current music volume (0-1)")]
+        [SerializeField] private float currentMusicVolume = 0.7f;
+        [SerializeField] private float currentSFXVolume = 0.8f;
+        [SerializeField] private float currentMasterVolume = 0.8f;
         
         // Mixer parameter names
         private const string MASTER_VOLUME = "MasterVolume";
@@ -37,6 +44,12 @@ namespace MadKnight.UI
             {
                 Destroy(gameObject);
                 return;
+            }
+            
+            // Cảnh báo nếu không có AudioMixer
+            if (audioMixer == null)
+            {
+                Debug.LogWarning("[AudioManager] AudioMixer is not assigned! Will use direct AudioSource.volume control.");
             }
             
             // Create audio sources if not assigned
@@ -59,43 +72,95 @@ namespace MadKnight.UI
                 ambienceSource.loop = true;
                 ambienceSource.playOnAwake = false;
             }
+            
+            // Load saved volumes
+            GameSettings settings = GameSettings.Load();
+            currentMusicVolume = settings.musicVolume;
+            currentSFXVolume = settings.sfxVolume;
+            currentMasterVolume = settings.masterVolume;
+            
+            Debug.Log($"[AudioManager] Initialized with volumes - Music: {currentMusicVolume:F2}, SFX: {currentSFXVolume:F2}, Master: {currentMasterVolume:F2}");
         }
         
         #region Volume Control
         
         public void SetMasterVolume(float volume)
         {
+            currentMasterVolume = volume;
+            
             if (audioMixer != null)
             {
                 // Convert 0-1 to decibels (-80 to 0)
                 float db = volume > 0 ? Mathf.Log10(volume) * 20 : -80f;
                 audioMixer.SetFloat(MASTER_VOLUME, db);
+                Debug.Log($"[AudioManager] Set master volume via AudioMixer: {volume:F2}");
+            }
+            else
+            {
+                // Re-apply all volumes with new master volume
+                SetMusicVolume(currentMusicVolume);
+                SetSFXVolume(currentSFXVolume);
+                Debug.Log($"[AudioManager] Set master volume: {volume:F2} (re-applied music & SFX)");
             }
         }
         
         public void SetMusicVolume(float volume)
         {
+            currentMusicVolume = volume;
+            
             if (audioMixer != null)
             {
                 float db = volume > 0 ? Mathf.Log10(volume) * 20 : -80f;
                 audioMixer.SetFloat(MUSIC_VOLUME, db);
+                Debug.Log($"[AudioManager] Set music volume via AudioMixer: {volume:F2} ({db:F1} dB)");
             }
-            else if (musicSource != null)
+            else
             {
-                musicSource.volume = volume;
+                // QUAN TRỌNG: Tìm và set volume cho TẤT CẢ AudioSource đang phát
+                AudioSource[] allAudioSources = FindObjectsOfType<AudioSource>();
+                int musicSourcesFound = 0;
+                
+                foreach (AudioSource source in allAudioSources)
+                {
+                    // Set volume cho TẤT CẢ AudioSource đang phát (trừ SFX source của AudioManager)
+                    if (source.isPlaying && source.clip != null && source != sfxSource && source != ambienceSource)
+                    {
+                        float finalVolume = volume * currentMasterVolume;
+                        source.volume = finalVolume;
+                        musicSourcesFound++;
+                        Debug.Log($"[AudioManager] Set volume for AudioSource: {source.gameObject.name} (clip: {source.clip.name}, loop: {source.loop}) = {finalVolume:F2}");
+                    }
+                }
+                
+                // Set cho musicSource của AudioManager (nếu có và đang phát)
+                if (musicSource != null && musicSource.isPlaying)
+                {
+                    musicSource.volume = volume * currentMasterVolume;
+                }
+                
+                Debug.Log($"[AudioManager] Updated {musicSourcesFound} AudioSource(s) to volume: {volume:F2}");
             }
         }
         
         public void SetSFXVolume(float volume)
         {
+            currentSFXVolume = volume;
+            
             if (audioMixer != null)
             {
                 float db = volume > 0 ? Mathf.Log10(volume) * 20 : -80f;
                 audioMixer.SetFloat(SFX_VOLUME, db);
+                Debug.Log($"[AudioManager] Set SFX volume via AudioMixer: {volume:F2}");
             }
-            else if (sfxSource != null)
+            else
             {
-                sfxSource.volume = volume;
+                // Set cho sfxSource của AudioManager
+                if (sfxSource != null)
+                {
+                    sfxSource.volume = volume * currentMasterVolume;
+                }
+                
+                Debug.Log($"[AudioManager] Set SFX volume: {volume:F2} (will affect PlaySFX calls)");
             }
         }
         
@@ -116,12 +181,19 @@ namespace MadKnight.UI
         
         #region Play Audio
         
-        public void PlayMusic(AudioClip clip, bool loop = true)
+        public void PlayMusic(AudioClip clip, bool loop = true, float startVolume = -1f)
         {
             if (musicSource == null || clip == null) return;
             
             musicSource.clip = clip;
             musicSource.loop = loop;
+            
+            // Nếu startVolume được chỉ định, set volume cho source
+            if (startVolume >= 0f && audioMixer == null)
+            {
+                musicSource.volume = startVolume;
+            }
+            
             musicSource.Play();
         }
         
@@ -133,10 +205,15 @@ namespace MadKnight.UI
             }
         }
         
-        public void PlaySFX(AudioClip clip)
+        public void PlaySFX(AudioClip clip, float volumeScale = 1f)
         {
             if (sfxSource == null || clip == null) return;
-            sfxSource.PlayOneShot(clip);
+            
+            // Áp dụng volume = currentSFXVolume * currentMasterVolume * volumeScale
+            float finalVolume = currentSFXVolume * currentMasterVolume * volumeScale;
+            sfxSource.PlayOneShot(clip, finalVolume);
+            
+            Debug.Log($"[AudioManager] PlaySFX: {clip.name} at volume {finalVolume:F2} (SFX: {currentSFXVolume:F2}, Master: {currentMasterVolume:F2}, Scale: {volumeScale:F2})");
         }
         
         public void PlayAmbience(AudioClip clip, bool loop = true)
