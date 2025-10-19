@@ -12,10 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5688d9de81f5b774e9fea9c168b3b39e, type: 3}
   m_Name: DotConnectConfig
   m_EditorClassIdentifier: MadKnight::MiniGames.DotConnect.DotConnectConfig
+<<<<<<< HEAD
   boardWidth: 7
   boardHeight: 7
   numberOfDotPairs: 5
   minimumDifficulty: 7
+=======
+  boardWidth: 5
+  boardHeight: 5
+  numberOfDotPairs: 4
+  minimumDifficulty: 2
+>>>>>>> 609294f (Added DotsConnect Minigame)
   maxGenerationAttempts: 100
   dotColors:
   - {r: 1, g: 0, b: 0, a: 1}

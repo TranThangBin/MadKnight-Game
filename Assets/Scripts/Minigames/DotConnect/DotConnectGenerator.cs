@@ -5,7 +5,10 @@ namespace MiniGames.DotConnect
 {
     /// <summary>
     /// Thuật toán tạo puzzle Dot-Connect có thể giải được với độ khó nhất định
+<<<<<<< HEAD
     /// Cải tiến: Tạo đường phức tạp hơn, nhiều rẽ, tránh đường thẳng
+=======
+>>>>>>> 609294f (Added DotsConnect Minigame)
     /// </summary>
     public class DotConnectGenerator
     {
@@ -21,11 +24,14 @@ namespace MiniGames.DotConnect
             new Vector2Int(1, 0)    // Phải
         };
         
+<<<<<<< HEAD
         // Hệ số khó
         private const int MIN_TURNS_PER_PATH = 3; // Tối thiểu 3 lượt rẽ
         private const float PREFER_TURN_PROBABILITY = 0.7f; // 70% khả năng rẽ thay vì đi thẳng
         private const int MIN_PATH_LENGTH = 5; // Độ dài tối thiểu của đường
         
+=======
+>>>>>>> 609294f (Added DotsConnect Minigame)
         public DotConnectGenerator(DotConnectConfig config)
         {
             this.config = config;
@@ -34,12 +40,16 @@ namespace MiniGames.DotConnect
         
         /// <summary>
         /// Tạo puzzle mới với các cặp dots có thể giải được
+<<<<<<< HEAD
         /// Với timeout protection
+=======
+>>>>>>> 609294f (Added DotsConnect Minigame)
         /// </summary>
         public List<DotPair> GeneratePuzzle()
         {
             List<DotPair> dotPairs = null;
             int attempts = 0;
+<<<<<<< HEAD
             float startTime = Time.realtimeSinceStartup;
             const float TIMEOUT = 4.0f; // Timeout 4 giây
             
@@ -52,12 +62,21 @@ namespace MiniGames.DotConnect
                     return GenerateSimplePuzzle();
                 }
                 
+=======
+            
+            while (attempts < config.maxGenerationAttempts)
+            {
+>>>>>>> 609294f (Added DotsConnect Minigame)
                 attempts++;
                 dotPairs = TryGeneratePuzzle();
                 
                 if (dotPairs != null)
                 {
+<<<<<<< HEAD
                     Debug.Log($"Đã tạo puzzle khó sau {attempts} lần thử");
+=======
+                    Debug.Log($"Đã tạo puzzle sau {attempts} lần thử");
+>>>>>>> 609294f (Added DotsConnect Minigame)
                     return dotPairs;
                 }
             }
@@ -72,14 +91,19 @@ namespace MiniGames.DotConnect
             int[,] board = new int[config.boardWidth, config.boardHeight];
             List<DotPair> dotPairs = new List<DotPair>();
             
+<<<<<<< HEAD
             // Thử tạo từng cặp dots với yêu cầu khó hơn
             int consecutiveFailures = 0;
             
+=======
+            // Thử tạo từng cặp dots
+>>>>>>> 609294f (Added DotsConnect Minigame)
             for (int i = 0; i < config.numberOfDotPairs; i++)
             {
                 // Tìm đường đi và đặt dots
                 List<GridCell> path = FindValidPath(board, i + 1);
                 
+<<<<<<< HEAD
                 if (path == null || path.Count < MIN_PATH_LENGTH)
                 {
                     consecutiveFailures++;
@@ -92,11 +116,17 @@ namespace MiniGames.DotConnect
                     
                     i--; // Thử lại
                     continue;
+=======
+                if (path == null || path.Count < 2)
+                {
+                    return null; // Không tìm được đường đi hợp lệ
+>>>>>>> 609294f (Added DotsConnect Minigame)
                 }
                 
                 // Kiểm tra độ khó của đường đi
                 if (!IsPathDifficultEnough(path))
                 {
+<<<<<<< HEAD
                     consecutiveFailures++;
                     
                     if (consecutiveFailures > 3)
@@ -111,6 +141,13 @@ namespace MiniGames.DotConnect
                 // Reset counter khi thành công
                 consecutiveFailures = 0;
                 
+=======
+                    // Nếu đường quá đơn giản, thử lại
+                    i--;
+                    continue;
+                }
+                
+>>>>>>> 609294f (Added DotsConnect Minigame)
                 // Đánh dấu đường đi trên bàn cờ
                 foreach (var cell in path)
                 {
@@ -131,6 +168,7 @@ namespace MiniGames.DotConnect
                 dotPairs.Add(pair);
             }
             
+<<<<<<< HEAD
             // Kiểm tra puzzle có thể giải được không với timeout
             float solveStartTime = Time.realtimeSinceStartup;
             bool isSolvable = false;
@@ -153,6 +191,10 @@ namespace MiniGames.DotConnect
             }
             
             if (isSolvable)
+=======
+            // Kiểm tra puzzle có thể giải được không
+            if (IsPuzzleSolvable(dotPairs, board))
+>>>>>>> 609294f (Added DotsConnect Minigame)
             {
                 return dotPairs;
             }
@@ -161,22 +203,34 @@ namespace MiniGames.DotConnect
         }
         
         /// <summary>
+<<<<<<< HEAD
         /// Tìm đường đi hợp lệ cho một cặp dots với yêu cầu khó hơn
+=======
+        /// Tìm đường đi hợp lệ cho một cặp dots
+>>>>>>> 609294f (Added DotsConnect Minigame)
         /// </summary>
         private List<GridCell> FindValidPath(int[,] board, int pairId)
         {
             // Lấy danh sách các ô trống
             List<GridCell> emptyCells = GetEmptyCells(board);
             
+<<<<<<< HEAD
             if (emptyCells.Count < MIN_PATH_LENGTH)
+=======
+            if (emptyCells.Count < 2)
+>>>>>>> 609294f (Added DotsConnect Minigame)
             {
                 return null;
             }
             
             // Thử nhiều lần để tìm đường đi tốt
+<<<<<<< HEAD
             int maxAttempts = Mathf.Min(100, emptyCells.Count * 2);
             
             for (int attempt = 0; attempt < maxAttempts; attempt++)
+=======
+            for (int attempt = 0; attempt < 50; attempt++)
+>>>>>>> 609294f (Added DotsConnect Minigame)
             {
                 // Chọn ngẫu nhiên điểm bắt đầu
                 GridCell start = emptyCells[random.Next(emptyCells.Count)];
@@ -184,7 +238,11 @@ namespace MiniGames.DotConnect
                 // Tìm đường đi từ điểm bắt đầu
                 List<GridCell> path = GenerateRandomPath(board, start, pairId);
                 
+<<<<<<< HEAD
                 if (path != null && path.Count >= MIN_PATH_LENGTH && IsPathDifficultEnough(path))
+=======
+                if (path != null && path.Count >= 3)
+>>>>>>> 609294f (Added DotsConnect Minigame)
                 {
                     return path;
                 }
@@ -194,7 +252,11 @@ namespace MiniGames.DotConnect
         }
         
         /// <summary>
+<<<<<<< HEAD
         /// Tạo đường đi ngẫu nhiên từ điểm bắt đầu với nhiều rẽ và phức tạp hơn
+=======
+        /// Tạo đường đi ngẫu nhiên từ điểm bắt đầu
+>>>>>>> 609294f (Added DotsConnect Minigame)
         /// </summary>
         private List<GridCell> GenerateRandomPath(int[,] board, GridCell start, int pairId)
         {
@@ -202,17 +264,24 @@ namespace MiniGames.DotConnect
             path.Add(start);
             
             GridCell current = start;
+<<<<<<< HEAD
             int minPathLength = Mathf.Max(MIN_PATH_LENGTH, config.minimumDifficulty);
+=======
+            int minPathLength = Mathf.Max(3, config.minimumDifficulty);
+>>>>>>> 609294f (Added DotsConnect Minigame)
             int maxPathLength = (config.boardWidth * config.boardHeight) / config.numberOfDotPairs;
             int targetLength = random.Next(minPathLength, maxPathLength + 1);
             
             HashSet<GridCell> visited = new HashSet<GridCell>();
             visited.Add(start);
             
+<<<<<<< HEAD
             Vector2Int? lastDirection = null;
             int straightCount = 0;
             int turnCount = 0;
             
+=======
+>>>>>>> 609294f (Added DotsConnect Minigame)
             for (int i = 0; i < targetLength; i++)
             {
                 // Lấy danh sách hướng có thể đi
@@ -223,6 +292,7 @@ namespace MiniGames.DotConnect
                     break; // Không còn hướng nào để đi
                 }
                 
+<<<<<<< HEAD
                 Vector2Int chosenDirection;
                 
                 // Ưu tiên rẽ để tăng độ khó
@@ -266,10 +336,16 @@ namespace MiniGames.DotConnect
                 }
                 
                 GridCell next = new GridCell(current.x + chosenDirection.x, current.y + chosenDirection.y);
+=======
+                // Chọn ngẫu nhiên một hướng
+                Vector2Int direction = availableDirections[random.Next(availableDirections.Count)];
+                GridCell next = new GridCell(current.x + direction.x, current.y + direction.y);
+>>>>>>> 609294f (Added DotsConnect Minigame)
                 
                 path.Add(next);
                 visited.Add(next);
                 current = next;
+<<<<<<< HEAD
                 lastDirection = chosenDirection;
             }
             
@@ -277,6 +353,8 @@ namespace MiniGames.DotConnect
             if (path.Count >= MIN_PATH_LENGTH && turnCount >= MIN_TURNS_PER_PATH)
             {
                 return path;
+=======
+>>>>>>> 609294f (Added DotsConnect Minigame)
             }
             
             return path.Count >= 3 ? path : null;
@@ -334,20 +412,31 @@ namespace MiniGames.DotConnect
         }
         
         /// <summary>
+<<<<<<< HEAD
         /// Kiểm tra đường đi có đủ khó không - Tiêu chí nghiêm ngặt hơn
         /// </summary>
         private bool IsPathDifficultEnough(List<GridCell> path)
         {
             if (path.Count < MIN_PATH_LENGTH)
+=======
+        /// Kiểm tra đường đi có đủ khó không
+        /// </summary>
+        private bool IsPathDifficultEnough(List<GridCell> path)
+        {
+            if (path.Count < 3)
+>>>>>>> 609294f (Added DotsConnect Minigame)
             {
                 return false;
             }
             
             // Đếm số lượt rẽ (càng nhiều rẽ, càng khó)
             int turns = 0;
+<<<<<<< HEAD
             int maxStraightSegment = 0;
             int currentStraight = 0;
             
+=======
+>>>>>>> 609294f (Added DotsConnect Minigame)
             for (int i = 1; i < path.Count - 1; i++)
             {
                 Vector2Int dir1 = new Vector2Int(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
@@ -356,6 +445,7 @@ namespace MiniGames.DotConnect
                 if (dir1 != dir2)
                 {
                     turns++;
+<<<<<<< HEAD
                     maxStraightSegment = Mathf.Max(maxStraightSegment, currentStraight);
                     currentStraight = 0;
                 }
@@ -379,6 +469,17 @@ namespace MiniGames.DotConnect
         /// <summary>
         /// Kiểm tra puzzle có thể giải được không bằng backtracking với timeout
         /// Thử nhiều thứ tự cặp pairs để tăng khả năng phát hiện solvable
+=======
+                }
+            }
+            
+            // Độ khó tối thiểu: số rẽ >= minimumDifficulty / 2
+            return turns >= config.minimumDifficulty / 2;
+        }
+        
+        /// <summary>
+        /// Kiểm tra puzzle có thể giải được không bằng backtracking
+>>>>>>> 609294f (Added DotsConnect Minigame)
         /// </summary>
         private bool IsPuzzleSolvable(List<DotPair> dotPairs, int[,] solutionBoard)
         {
@@ -392,6 +493,7 @@ namespace MiniGames.DotConnect
                 testBoard[pair.endDot.x, pair.endDot.y] = -(pair.pairId + 1);
             }
             
+<<<<<<< HEAD
             // Thử giải bằng backtracking với giới hạn depth
             int maxDepth = dotPairs.Count * 10; // Giới hạn số bước để tránh infinite loop
             
@@ -461,6 +563,14 @@ namespace MiniGames.DotConnect
                 return false; // Timeout
             }
             
+=======
+            // Thử giải bằng backtracking
+            return SolveRecursive(testBoard, dotPairs, 0);
+        }
+        
+        private bool SolveRecursive(int[,] board, List<DotPair> dotPairs, int pairIndex)
+        {
+>>>>>>> 609294f (Added DotsConnect Minigame)
             if (pairIndex >= dotPairs.Count)
             {
                 return true; // Đã nối hết tất cả các cặp
@@ -486,7 +596,11 @@ namespace MiniGames.DotConnect
             }
             
             // Thử giải cặp tiếp theo
+<<<<<<< HEAD
             if (SolveRecursive(board, dotPairs, pairIndex + 1, depth + 1, maxDepth))
+=======
+            if (SolveRecursive(board, dotPairs, pairIndex + 1))
+>>>>>>> 609294f (Added DotsConnect Minigame)
             {
                 return true;
             }
@@ -576,13 +690,19 @@ namespace MiniGames.DotConnect
         
         /// <summary>
         /// Tạo puzzle đơn giản khi không thể tạo puzzle phức tạp
+<<<<<<< HEAD
         /// Method công khai để có thể gọi từ bên ngoài
         /// </summary>
         public List<DotPair> GenerateSimplePuzzle()
+=======
+        /// </summary>
+        private List<DotPair> GenerateSimplePuzzle()
+>>>>>>> 609294f (Added DotsConnect Minigame)
         {
             List<DotPair> dotPairs = new List<DotPair>();
             List<GridCell> usedCells = new List<GridCell>();
             
+<<<<<<< HEAD
             // Giảm số cặp nếu board quá nhỏ
             int actualPairCount = Mathf.Min(config.numberOfDotPairs, (config.boardWidth * config.boardHeight) / 4);
             
@@ -615,6 +735,21 @@ namespace MiniGames.DotConnect
                         Debug.LogWarning("Không thể tìm đủ ô trống cho simple puzzle");
                         return dotPairs.Count > 0 ? dotPairs : CreateMinimalPuzzle();
                     }
+=======
+            for (int i = 0; i < config.numberOfDotPairs; i++)
+            {
+                GridCell start, end;
+                
+                // Tìm 2 ô trống ngẫu nhiên
+                do
+                {
+                    start = new GridCell(random.Next(config.boardWidth), random.Next(config.boardHeight));
+                } while (usedCells.Contains(start));
+                
+                do
+                {
+                    end = new GridCell(random.Next(config.boardWidth), random.Next(config.boardHeight));
+>>>>>>> 609294f (Added DotsConnect Minigame)
                 } while (usedCells.Contains(end) || end == start);
                 
                 usedCells.Add(start);
@@ -627,6 +762,7 @@ namespace MiniGames.DotConnect
             
             return dotPairs;
         }
+<<<<<<< HEAD
         
         /// <summary>
         /// Tạo puzzle tối giản nhất (chỉ 1-2 cặp)
@@ -645,5 +781,7 @@ namespace MiniGames.DotConnect
             Debug.Log("Đã tạo minimal puzzle với 1 cặp duy nhất");
             return dotPairs;
         }
+=======
+>>>>>>> 609294f (Added DotsConnect Minigame)
     }
 }
