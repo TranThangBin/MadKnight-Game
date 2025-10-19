@@ -953,8 +953,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 248233996}
   m_HandleRect: {fileID: 248233995}
   m_Direction: 2
-  m_Value: -0.0016655639
-  m_Size: 0.09026336
+  m_Value: -0.0000029451703
+  m_Size: 0.09333333
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1428,9 +1428,9 @@ RectTransform:
   - {fileID: 263672175}
   m_Father: {fileID: 1505793050}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 80, y: -15}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &87921197
@@ -4025,9 +4025,9 @@ RectTransform:
   - {fileID: 504665730}
   m_Father: {fileID: 658945217}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 80, y: -15}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &325325674
@@ -4382,9 +4382,9 @@ RectTransform:
   - {fileID: 1025255331}
   m_Father: {fileID: 1505793050}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 240, y: -15}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &371837046
@@ -6395,9 +6395,9 @@ RectTransform:
   - {fileID: 1489869672}
   m_Father: {fileID: 658945217}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 240, y: -15}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &693365650
@@ -8889,11 +8889,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-<<<<<<< HEAD
-  m_AnchoredPosition: {x: 298.37424, y: 148.89638}
-=======
-  m_AnchoredPosition: {x: 298.37424, y: 148.4434}
->>>>>>> 609294f (Added DotsConnect Minigame)
+  m_AnchoredPosition: {x: 298.37424, y: 148.44414}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &844341286
@@ -10871,13 +10867,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-<<<<<<< HEAD
   m_Resource: {fileID: 8300000, guid: 3376039162ea364418afda1ab234b79a, type: 3}
   m_PlayOnAwake: 0
-=======
-  m_Resource: {fileID: 8300000, guid: 30bdc8a9f2bdcbc439a85a04e1a150fb, type: 3}
-  m_PlayOnAwake: 1
->>>>>>> 609294f (Added DotsConnect Minigame)
   m_Volume: 1
   m_Pitch: 1
   Loop: 1
@@ -11826,9 +11817,9 @@ RectTransform:
   - {fileID: 748919934}
   m_Father: {fileID: 1329755366}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 80, y: -15}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1209948487
@@ -14504,10 +14495,7 @@ RectTransform:
   - {fileID: 1959980476}
   - {fileID: 436782126}
   - {fileID: 1066526630}
-<<<<<<< HEAD
   - {fileID: 1378244607}
-=======
->>>>>>> 609294f (Added DotsConnect Minigame)
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -16852,9 +16840,9 @@ RectTransform:
   - {fileID: 732274653}
   m_Father: {fileID: 1329755366}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 240, y: -15}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1626021199
@@ -20480,11 +20468,8 @@ MonoBehaviour:
   subtitleFadeInDuration: 1.5
   buttonsFadeInDuration: 1
   delayBetweenElements: 0.5
-<<<<<<< HEAD
-  introMusic: {fileID: 1378244608}
-=======
->>>>>>> 609294f (Added DotsConnect Minigame)
-  backgroundMusic: {fileID: 1066526631}
+  introMusicClip: {fileID: 0}
+  backgroundMusicClip: {fileID: 0}
   musicFadeInDuration: 3
   crossfadeDuration: 2
 --- !u!225 &1977526464
