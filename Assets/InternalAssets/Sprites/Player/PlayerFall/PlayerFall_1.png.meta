@@ -114,6 +114,9 @@ TextureImporter:
     sprites:
     - serializedVersion: 2
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> fe4c65c (chore: update jump and fall animation)
       name: PlayerFall_1_0
       rect:
         serializedVersion: 2
@@ -121,6 +124,7 @@ TextureImporter:
         y: 0
         width: 700
         height: 700
+<<<<<<< HEAD
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
 =======
@@ -134,10 +138,15 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
 >>>>>>> b9046dc (feat: jump animation)
+=======
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+>>>>>>> fe4c65c (chore: update jump and fall animation)
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
+<<<<<<< HEAD
 <<<<<<< HEAD
       tessellationDetail: 0
       bones: []
@@ -149,6 +158,12 @@ TextureImporter:
       spriteID: a5d212d1db86ba940800000000000000
       internalID: 5308451747233082714
 >>>>>>> b9046dc (feat: jump animation)
+=======
+      tessellationDetail: 0
+      bones: []
+      spriteID: b6cd0f9da122c937e96fb2ae5a04a390
+      internalID: -1573306234
+>>>>>>> fe4c65c (chore: update jump and fall animation)
       vertices: []
       indices: 
       edges: []
@@ -158,10 +173,14 @@ TextureImporter:
     physicsShape: []
     bones: []
 <<<<<<< HEAD
+<<<<<<< HEAD
     spriteID: 1d60d4cdc02c888b8bd5a43060b923ed
 =======
     spriteID: 
 >>>>>>> b9046dc (feat: jump animation)
+=======
+    spriteID: 1d60d4cdc02c888b8bd5a43060b923ed
+>>>>>>> fe4c65c (chore: update jump and fall animation)
     internalID: 0
     vertices: []
     indices: 
@@ -169,6 +188,7 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
+<<<<<<< HEAD
 <<<<<<< HEAD
       entries:
       - key: SpriteEditor.SliceSettings
@@ -180,6 +200,13 @@ TextureImporter:
     nameFileIdTable:
       frame_03_0: 5308451747233082714
 >>>>>>> b9046dc (feat: jump animation)
+=======
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":700.0,"y":700.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      PlayerFall_1_0: -1573306234
+>>>>>>> fe4c65c (chore: update jump and fall animation)
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
