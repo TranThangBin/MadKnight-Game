@@ -51,7 +51,7 @@ This project is currently under early development by **RedRat Team**, a student 
 | **Creative Lead / Writer** | Huan | Storyline, direction, and overall world design |
 | **Technical Lead** | [RedRatTeam] | Unity engine development, game systems |
 | **Audio Design** | TBD | Original piano and ambient tracks |
-| **Art Direction** | TBD | Character & environment concept |
+| **Art Direction** | FPT | Character & environment concept |
 
 ---
 
@@ -60,17 +60,13 @@ This project is currently under early development by **RedRat Team**, a student 
 > Minimalistic. Emotional. Bleak.  
 >  
 > The visual design of **ISLA** draws inspiration from silent memories — faded tones, distorted light, and lonely spaces where imagination becomes refuge.
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/b890e1cb-153c-4ae3-8fb4-f99016b889f9" width="120"/>
-</p>
-
+ 
 ---
 
 
 ## 🩶 Contact
 
-📧 **RedRatTeam**)  
+📧 **RedRatTeam**
 💬 *“Even the forgotten stories remember us.”*
 
 ---
