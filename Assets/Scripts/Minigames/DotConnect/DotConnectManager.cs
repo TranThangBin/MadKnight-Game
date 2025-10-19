@@ -52,7 +52,6 @@ namespace MiniGames.DotConnect
         private Camera mainCamera;
         private float cellSize;
         
-<<<<<<< HEAD
         // Fallback mechanism
         private bool isGenerating = false;
         private float generationStartTime;
@@ -60,8 +59,6 @@ namespace MiniGames.DotConnect
         private int failedAttempts = 0;
         private const int MAX_FAILED_ATTEMPTS = 3;
         
-=======
->>>>>>> 609294f (Added DotsConnect Minigame)
         private void Awake()
         {
             mainCamera = Camera.main;
@@ -87,7 +84,6 @@ namespace MiniGames.DotConnect
         /// </summary>
         public void InitializePuzzle()
         {
-<<<<<<< HEAD
             // Kiểm tra nếu đang trong quá trình tạo
             if (isGenerating)
             {
@@ -198,43 +194,22 @@ namespace MiniGames.DotConnect
                 
                 dotPairs.Add(new DotPair(i, start, end, color));
             }
-=======
-            ClearBoard();
-            
-            // Tạo puzzle
-            dotPairs = generator.GeneratePuzzle();
->>>>>>> 609294f (Added DotsConnect Minigame)
             
             // Khởi tạo bàn cờ
             board = new int[config.boardWidth, config.boardHeight];
             
-<<<<<<< HEAD
             foreach (var pair in dotPairs)
             {
                 board[pair.startDot.x, pair.startDot.y] = -(pair.pairId + 1);
                 board[pair.endDot.x, pair.endDot.y] = -(pair.pairId + 1);
             }
             
-=======
-            // Đánh dấu vị trí các dots
-            foreach (var pair in dotPairs)
-            {
-                board[pair.startDot.x, pair.startDot.y] = -(pair.pairId + 1); // Dấu âm để phân biệt dot
-                board[pair.endDot.x, pair.endDot.y] = -(pair.pairId + 1);
-            }
-            
-            // Tạo visual
->>>>>>> 609294f (Added DotsConnect Minigame)
             CreateBoardVisual();
             CreateDotsVisual();
             
             onPuzzleStarted?.Invoke();
             
-<<<<<<< HEAD
             Debug.Log("Đã tạo emergency puzzle với 2 cặp đơn giản");
-=======
-            Debug.Log($"Puzzle đã được khởi tạo với {dotPairs.Count} cặp dots");
->>>>>>> 609294f (Added DotsConnect Minigame)
         }
         
         /// <summary>
@@ -458,7 +433,6 @@ namespace MiniGames.DotConnect
         
         private void Update()
         {
-<<<<<<< HEAD
             // Kiểm tra deadlock trong quá trình tạo puzzle
             if (isGenerating && Time.realtimeSinceStartup - generationStartTime > GENERATION_TIMEOUT)
             {
@@ -473,8 +447,6 @@ namespace MiniGames.DotConnect
                 }
             }
             
-=======
->>>>>>> 609294f (Added DotsConnect Minigame)
             HandleInput();
             
             // Debug: Nhấn D để debug LineRenderer
@@ -488,7 +460,6 @@ namespace MiniGames.DotConnect
             {
                 LineRendererMaterialHelper.ListAvailableShaders();
             }
-<<<<<<< HEAD
             
             // Debug: Nhấn R để force reset
             if (Input.GetKeyDown(KeyCode.R))
@@ -497,8 +468,6 @@ namespace MiniGames.DotConnect
                 isGenerating = false;
                 InitializePuzzle();
             }
-=======
->>>>>>> 609294f (Added DotsConnect Minigame)
         }
         
         /// <summary>
@@ -657,12 +626,8 @@ namespace MiniGames.DotConnect
             // Đánh dấu đường đi trên board
             foreach (var cell in currentPath)
             {
-<<<<<<< HEAD
                 // Chỉ ghi đường lên ô trống (không ghi đè lên các dot âm)
                 if (board[cell.x, cell.y] == 0)
-=======
-                if (board[cell.x, cell.y] == 0 || board[cell.x, cell.y] < 0)
->>>>>>> 609294f (Added DotsConnect Minigame)
                 {
                     board[cell.x, cell.y] = currentPair.pairId + 1;
                 }
@@ -770,7 +735,6 @@ namespace MiniGames.DotConnect
             
             // Có thể đi qua ô trống hoặc ô là dot đích
             GridCell targetDot = currentPath[0] == currentPair.startDot ? currentPair.endDot : currentPair.startDot;
-<<<<<<< HEAD
 
             // Nếu ô là một dot (âm), chỉ cho phép đi nếu đó là dot đích thuộc cặp hiện tại
             if (cellValue < 0)
@@ -799,11 +763,6 @@ namespace MiniGames.DotConnect
                 if (p.startDot == cell || p.endDot == cell) return true;
             }
             return false;
-=======
-            
-            return cellValue == 0 || 
-                   (cell == targetDot && cellValue == -(currentPair.pairId + 1));
->>>>>>> 609294f (Added DotsConnect Minigame)
         }
         
         private bool IsAdjacentTo(GridCell cell, GridCell other)
@@ -869,11 +828,7 @@ namespace MiniGames.DotConnect
             InitializePuzzle();
         }
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 609294f (Added DotsConnect Minigame)
     /// <summary>
     /// Component gắn vào mỗi dot để nhận diện
     /// </summary>
@@ -883,8 +838,4 @@ namespace MiniGames.DotConnect
         public GridCell gridCell;
         public bool isStart;
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 609294f (Added DotsConnect Minigame)
