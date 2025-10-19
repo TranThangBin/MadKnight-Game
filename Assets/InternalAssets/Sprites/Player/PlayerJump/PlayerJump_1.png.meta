@@ -1,10 +1,19 @@
 fileFormatVersion: 2
+<<<<<<< HEAD
 guid: 3175c06331d589d929a935c37b1d2d3b
 TextureImporter:
   internalIDToNameTable:
   - first:
       213: 1484516987461097075
     second: PlayerJump_1_0
+=======
+guid: 67bd2353ec07e84468d8b8724bc4019a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -845719855022467313
+    second: La_0
+>>>>>>> b9046dc (feat: jump animation)
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,6 +109,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
+<<<<<<< HEAD
       name: PlayerJump_1_0
       rect:
         serializedVersion: 2
@@ -109,14 +119,30 @@ TextureImporter:
         height: 700
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
+=======
+      name: La_0
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 6
+        width: 1600
+        height: 363
+      alignment: 0
+      pivot: {x: 0, y: 0}
+>>>>>>> b9046dc (feat: jump animation)
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
+<<<<<<< HEAD
       spriteID: 376d6a4b5501a9410800000000000000
       internalID: 1484516987461097075
+=======
+      spriteID: f0714edc5466344f0800000000000000
+      internalID: -845719855022467313
+>>>>>>> b9046dc (feat: jump animation)
       vertices: []
       indices: 
       edges: []
@@ -125,7 +151,11 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
+<<<<<<< HEAD
     spriteID: 432299ead1c450fbdae0f7c12996058e
+=======
+    spriteID: 
+>>>>>>> b9046dc (feat: jump animation)
     internalID: 0
     vertices: []
     indices: 
@@ -133,11 +163,17 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
+<<<<<<< HEAD
       entries:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":700.0,"y":700.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       PlayerJump_1_0: 1484516987461097075
+=======
+      entries: []
+    nameFileIdTable:
+      La_0: -845719855022467313
+>>>>>>> b9046dc (feat: jump animation)
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

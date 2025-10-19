@@ -1,10 +1,19 @@
 fileFormatVersion: 2
+<<<<<<< HEAD
 guid: 01668005cd79ea6f68e67a16978baebe
 TextureImporter:
   internalIDToNameTable:
   - first:
       213: 4130640169021434097
     second: 5_0
+=======
+guid: d9e5aa09e48780a478cf51e9f56590e3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8936989438181755973
+    second: Mau nen_0
+>>>>>>> b9046dc (feat: jump animation)
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,23 +109,41 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
+<<<<<<< HEAD
       name: PlayerFall_2_0
+=======
+      name: Mau nen_0
+>>>>>>> b9046dc (feat: jump animation)
       rect:
         serializedVersion: 2
         x: 0
         y: 0
+<<<<<<< HEAD
         width: 700
         height: 700
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
+=======
+        width: 3610
+        height: 2090
+      alignment: 0
+      pivot: {x: 0, y: 0}
+>>>>>>> b9046dc (feat: jump animation)
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
+<<<<<<< HEAD
       tessellationDetail: 0
       bones: []
       spriteID: 514f037f2ee6a055dbe094fc457b4fa1
       internalID: 1014926262
+=======
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54ccd383b80960c70800000000000000
+      internalID: 8936989438181755973
+>>>>>>> b9046dc (feat: jump animation)
       vertices: []
       indices: 
       edges: []
@@ -125,7 +152,11 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
+<<<<<<< HEAD
     spriteID: b49fd15f976021a16a6e6348e5ce2e3f
+=======
+    spriteID: 
+>>>>>>> b9046dc (feat: jump animation)
     internalID: 0
     vertices: []
     indices: 
@@ -133,11 +164,17 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
+<<<<<<< HEAD
       entries:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":700.0,"y":700.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       PlayerFall_2_0: 1014926262
+=======
+      entries: []
+    nameFileIdTable:
+      Mau nen_0: 8936989438181755973
+>>>>>>> b9046dc (feat: jump animation)
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

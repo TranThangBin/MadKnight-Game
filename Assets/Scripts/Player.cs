@@ -159,6 +159,7 @@ namespace MadKnight
                         {
                             _state = PlayerState.Airborne;
                             _hasJumped = false;
+                            _anim.SetTrigger(nameof(PlayerAnimationEnum.TJump));
                         }
                     }
                     break;
