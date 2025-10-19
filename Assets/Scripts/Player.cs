@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MadKnight
 {
-    [RequireComponent(typeof(Rigidbody2D))]
+    [RequireComponent(typeof(Rigidbody2D), typeof(Animator))]
     public class Player : MonoBehaviour
     {
         private enum PlayerState
@@ -29,6 +29,7 @@ namespace MadKnight
         [SerializeField] private Transform _wallCheck;
 
         private Rigidbody2D _rb;
+        private Animator _anim;
 
         private PlayerState _state;
         private PlayerState _prevState;
@@ -44,6 +45,7 @@ namespace MadKnight
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
+            _anim = GetComponent<Animator>();
 
             _state = PlayerState.Idle;
             _jumpRemaining = _stats.MaxJumpCount;
@@ -52,6 +54,11 @@ namespace MadKnight
         private void Update()
         {
             _horizontalAxis = Input.GetAxis("Horizontal");
+
+            _anim.SetFloat(
+                    nameof(PlayerAnimationEnum.FHorizontalVelocity),
+                    Mathf.Abs(_rb.linearVelocityX)
+            );
 
             if (Camera.main)
             {
