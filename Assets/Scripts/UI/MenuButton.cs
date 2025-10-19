@@ -29,6 +29,8 @@ namespace MadKnight.UI
         [Header("Sound")]
         [SerializeField] private AudioClip hoverSound;
         [SerializeField] private AudioClip clickSound;
+        [Tooltip("Sử dụng AudioManager thay vì AudioSource local")]
+        [SerializeField] private bool useAudioManager = true;
         
         [Header("Events")]
         public UnityEvent onClick;
@@ -49,9 +51,12 @@ namespace MadKnight.UI
             targetColor = normalColor;
             buttonText.color = normalColor;
             
-            // Setup AudioSource
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.playOnAwake = false;
+            // Setup AudioSource (chỉ khi không dùng AudioManager)
+            if (!useAudioManager)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+            }
             
             // Setup Blood Drip Effect V2
             if (enableBloodDrip && bloodDripEffect == null)
@@ -83,9 +88,16 @@ namespace MadKnight.UI
             }
             
             // Play hover sound
-            if (hoverSound != null && audioSource != null)
+            if (hoverSound != null)
             {
-                audioSource.PlayOneShot(hoverSound);
+                if (useAudioManager && AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX(hoverSound);
+                }
+                else if (audioSource != null)
+                {
+                    audioSource.PlayOneShot(hoverSound);
+                }
             }
         }
         
@@ -108,9 +120,16 @@ namespace MadKnight.UI
             if (!isInteractable) return;
             
             // Play click sound
-            if (clickSound != null && audioSource != null)
+            if (clickSound != null)
             {
-                audioSource.PlayOneShot(clickSound);
+                if (useAudioManager && AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX(clickSound);
+                }
+                else if (audioSource != null)
+                {
+                    audioSource.PlayOneShot(clickSound);
+                }
             }
             
             // Invoke event
