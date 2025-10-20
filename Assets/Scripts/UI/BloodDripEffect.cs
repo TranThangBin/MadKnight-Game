@@ -33,8 +33,7 @@ namespace MadKnight.UI
         [Header("✨ Special Effects")]
         [SerializeField] private bool enableCorrosion = true; // Ăn mòn text
         [SerializeField] private float corrosionSpeed = 0.5f;
-        [SerializeField] private bool enablePulse = true; // Nhấp nháy
-        [SerializeField] private bool enableDistortion = true; // Méo mó
+        [SerializeField] private bool enablePulse = true; // Nhấp nháy 
         
         private RectTransform container;
         private TextMeshProUGUI buttonText;

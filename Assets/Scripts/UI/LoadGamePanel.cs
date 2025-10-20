@@ -428,7 +428,7 @@ namespace MadKnight.UI
                 
                 if (confirmText != null)
                 {
-                    confirmText.text = "Delete ALL saves?\nThis will delete auto save and all 10 slots!\nThis action cannot be undone.";
+                    confirmText.text = "Delete ALL saves?\nThis will delete auto save and all slots!\nThis action cannot be undone.";
                 }
                 
                 pendingDeleteSlot = -99; // Special code for delete all
