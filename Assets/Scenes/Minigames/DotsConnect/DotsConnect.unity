@@ -130,10 +130,7 @@ GameObject:
   - component: {fileID: 308345491}
   - component: {fileID: 308345490}
   - component: {fileID: 308345489}
-<<<<<<< HEAD
   - component: {fileID: 308345492}
-=======
->>>>>>> 609294f (Added DotsConnect Minigame)
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -215,7 +212,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-<<<<<<< HEAD
 --- !u!114 &308345492
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -320,7 +316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fb10f637aa41094fa16f6b6d018c081, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MadKnight::MiniGames.DotConnect.DotConnectManager
-  config: {fileID: 11400000, guid: 3b801cc749613dd4b9489014ecc918e8, type: 2}
+  config: {fileID: 11400000, guid: 74f4c85375eff43429da540e402bd8f2, type: 2}
   boardContainer: {fileID: 961800852}
   dotPrefab: {fileID: 7427071775568834827, guid: bfc916502422f7045b28fa8b1fb52053, type: 3}
   cellPrefab: {fileID: 3758600095149628270, guid: 1f7c4a2443e24c04e8fe56c8004bec75, type: 3}
@@ -350,14 +346,9 @@ Transform:
   - {fileID: 961800852}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-=======
->>>>>>> 609294f (Added DotsConnect Minigame)
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 308345491}
-<<<<<<< HEAD
   - {fileID: 1014281740}
-=======
->>>>>>> 609294f (Added DotsConnect Minigame)
