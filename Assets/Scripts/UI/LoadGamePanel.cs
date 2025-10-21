@@ -262,8 +262,8 @@ namespace MadKnight.UI
                             saveTime: data.saveTime,
                             sceneName: data.currentScene,
                             playTime: data.playTimeSeconds,
-                            level: data.playerLevel,
-                            difficulty: data.difficulty
+                            level: 0,
+                            difficulty: 0
                         );
                     }
                     else
@@ -315,8 +315,8 @@ namespace MadKnight.UI
                         saveTime: info.saveTime,
                         sceneName: info.currentScene,
                         playTime: info.playTimeSeconds,
-                        level: info.playerLevel,
-                        difficulty: info.difficulty
+                        level: 0,
+                        difficulty: 0
                     );
                 }
             }

@@ -1,23 +1,32 @@
 using UnityEngine;
 using System;
 using System.IO;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace MadKnight.Save
 {
     /// <summary>
     /// Save System - Quản lý lưu/load game data
-    /// Sử dụng JSON + File System
-    /// Auto Save: LocalLow/RedRat/autosave.json
-    /// Manual Saves: LocalLow/RedRat/save01.json, save02.json, ... (max 10 slots)
-    /// Version: 1.1 - Force recompile
+    /// Sử dụng JSON + Encryption (AES-256) để bảo vệ dữ liệu
+    /// Auto Save: LocalLow/RedRat/autosave.dat (encrypted)
+    /// Manual Saves: LocalLow/RedRat/save01.dat, save02.dat, ... (max 10 slots, encrypted)
+    /// Version: 2.0 - Encrypted Save System
     /// </summary>
     public static class SaveSystem
     {
+        // Encryption Key (32 bytes for AES-256)
+        // QUAN TRỌNG: Thay đổi key này để bảo mật riêng cho game của bạn!
+        // PHẢI đúng 32 ký tự (32 bytes) cho AES-256
+        private static readonly byte[] ENCRYPTION_KEY = Encoding.UTF8.GetBytes("ISLA_Game_Super_Secret_Key_2025!");
+        
+        // Initialization Vector (16 bytes for AES)
+        // PHẢI đúng 16 ký tự (16 bytes)
+        private static readonly byte[] ENCRYPTION_IV = Encoding.UTF8.GetBytes("RedRat_IV16Bytes");
         private const string COMPANY_NAME = "RedRat";
-        private const string AUTO_SAVE_FILE = "autosave.json";
+        private const string AUTO_SAVE_FILE = "autosave.dat"; // Đổi từ .json sang .dat
         private const int MAX_SAVE_SLOTS = 10;
         
-        // Custom save path: LocalLow/RedRat/ (thay vì dùng Application.persistentDataPath)
         private static string SavePath
         {
             get
@@ -38,6 +47,80 @@ namespace MadKnight.Save
         
         private static string AutoSavePath => Path.Combine(SavePath, AUTO_SAVE_FILE);
         
+        #region Encryption/Decryption
+        
+        /// <summary>
+        /// Mã hóa dữ liệu JSON thành byte array
+        /// </summary>
+        private static byte[] EncryptData(string jsonData)
+        {
+            try
+            {
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = ENCRYPTION_KEY;
+                    aes.IV = ENCRYPTION_IV;
+                    aes.Mode = CipherMode.CBC;
+                    aes.Padding = PaddingMode.PKCS7;
+                    
+                    ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+                    
+                    using (MemoryStream msEncrypt = new MemoryStream())
+                    {
+                        using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                        {
+                            byte[] plainBytes = Encoding.UTF8.GetBytes(jsonData);
+                            csEncrypt.Write(plainBytes, 0, plainBytes.Length);
+                            csEncrypt.FlushFinalBlock();
+                            return msEncrypt.ToArray();
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveSystem] Encryption failed: {e.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Giải mã byte array thành JSON string
+        /// </summary>
+        private static string DecryptData(byte[] encryptedData)
+        {
+            try
+            {
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = ENCRYPTION_KEY;
+                    aes.IV = ENCRYPTION_IV;
+                    aes.Mode = CipherMode.CBC;
+                    aes.Padding = PaddingMode.PKCS7;
+                    
+                    ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                    
+                    using (MemoryStream msDecrypt = new MemoryStream(encryptedData))
+                    {
+                        using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                        {
+                            using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                            {
+                                return srDecrypt.ReadToEnd();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveSystem] Decryption failed: {e.Message}");
+                return null;
+            }
+        }
+        
+        #endregion
+        
         #region Auto Save
         
         /// <summary>
@@ -51,12 +134,9 @@ namespace MadKnight.Save
                 saveTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 currentScene = "Level01",
                 playerPosition = Vector3.zero,
-                playerHealth = 100f,
-                playerStamina = 100f,
                 checkpointScene = "Level01",
                 checkpointPosition = Vector3.zero,
                 playTimeSeconds = 0f,
-                difficulty = 1 // Normal
             };
             
             SaveAutoSave(newSave);
@@ -65,7 +145,7 @@ namespace MadKnight.Save
         
         /// <summary>
         /// Lưu auto save (tự động liên tục trong game)
-        /// Path: LocalLow/RedRat/autosave.json
+        /// Path: LocalLow/RedRat/autosave.dat (encrypted)
         /// </summary>
         public static void SaveAutoSave(PlayerSaveData data)
         {
@@ -82,12 +162,20 @@ namespace MadKnight.Save
                 data.saveTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 
                 // Convert to JSON
-                string json = JsonUtility.ToJson(data, true);
+                string json = JsonUtility.ToJson(data, false); // prettyPrint = false để giảm size
                 
-                // Save to autosave.json
-                File.WriteAllText(AutoSavePath, json);
+                // Encrypt JSON
+                byte[] encryptedData = EncryptData(json);
+                if (encryptedData == null)
+                {
+                    Debug.LogError("[SaveSystem] Failed to encrypt save data!");
+                    return;
+                }
                 
-                Debug.Log($"[SaveSystem] Auto save successful: {AutoSavePath}");
+                // Save encrypted data to .dat file
+                File.WriteAllBytes(AutoSavePath, encryptedData);
+                
+                Debug.Log($"[SaveSystem] Auto save successful (encrypted): {AutoSavePath}");
             }
             catch (Exception e)
             {
@@ -108,10 +196,21 @@ namespace MadKnight.Save
                     return null;
                 }
                 
-                string json = File.ReadAllText(AutoSavePath);
+                // Read encrypted data
+                byte[] encryptedData = File.ReadAllBytes(AutoSavePath);
+                
+                // Decrypt data
+                string json = DecryptData(encryptedData);
+                if (string.IsNullOrEmpty(json))
+                {
+                    Debug.LogError("[SaveSystem] Failed to decrypt save data!");
+                    return null;
+                }
+                
+                // Parse JSON
                 PlayerSaveData data = JsonUtility.FromJson<PlayerSaveData>(json);
                 
-                Debug.Log($"[SaveSystem] Auto save loaded: {data.saveTime}");
+                Debug.Log($"[SaveSystem] Auto save loaded (decrypted): {data.saveTime}");
                 return data;
             }
             catch (Exception e)
@@ -154,7 +253,7 @@ namespace MadKnight.Save
         
         /// <summary>
         /// Lưu vào slot (1-10)
-        /// Path: LocalLow/RedRat/save01.json, save02.json, ...
+        /// Path: LocalLow/RedRat/save01.dat, save02.dat, ... (encrypted)
         /// </summary>
         public static void SaveToSlot(PlayerSaveData data, int slotNumber)
         {
@@ -174,13 +273,23 @@ namespace MadKnight.Save
                 data.saveTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 data.slotNumber = slotNumber;
                 
-                string json = JsonUtility.ToJson(data, true);
+                // Convert to JSON
+                string json = JsonUtility.ToJson(data, false);
+                
+                // Encrypt
+                byte[] encryptedData = EncryptData(json);
+                if (encryptedData == null)
+                {
+                    Debug.LogError("[SaveSystem] Failed to encrypt save data!");
+                    return;
+                }
+                
+                // Save to .dat file
                 string fileName = GetSlotFileName(slotNumber);
                 string filePath = Path.Combine(SavePath, fileName);
+                File.WriteAllBytes(filePath, encryptedData);
                 
-                File.WriteAllText(filePath, json);
-                
-                Debug.Log($"[SaveSystem] Saved to slot {slotNumber}: {filePath}");
+                Debug.Log($"[SaveSystem] Saved to slot {slotNumber} (encrypted): {filePath}");
             }
             catch (Exception e)
             {
@@ -210,10 +319,21 @@ namespace MadKnight.Save
                     return null;
                 }
                 
-                string json = File.ReadAllText(filePath);
+                // Read encrypted data
+                byte[] encryptedData = File.ReadAllBytes(filePath);
+                
+                // Decrypt
+                string json = DecryptData(encryptedData);
+                if (string.IsNullOrEmpty(json))
+                {
+                    Debug.LogError("[SaveSystem] Failed to decrypt save data!");
+                    return null;
+                }
+                
+                // Parse JSON
                 PlayerSaveData data = JsonUtility.FromJson<PlayerSaveData>(json);
                 
-                Debug.Log($"[SaveSystem] Loaded from slot {slotNumber}: {data.saveTime}");
+                Debug.Log($"[SaveSystem] Loaded from slot {slotNumber} (decrypted): {data.saveTime}");
                 return data;
             }
             catch (Exception e)
@@ -301,15 +421,19 @@ namespace MadKnight.Save
             {
                 try
                 {
-                    string json = File.ReadAllText(filePath);
-                    PlayerSaveData data = JsonUtility.FromJson<PlayerSaveData>(json);
+                    // Read and decrypt
+                    byte[] encryptedData = File.ReadAllBytes(filePath);
+                    string json = DecryptData(encryptedData);
                     
-                    info.isEmpty = false;
-                    info.saveTime = data.saveTime;
-                    info.currentScene = data.currentScene;
-                    info.playTimeSeconds = data.playTimeSeconds;
-                    info.playerLevel = data.playerLevel;
-                    info.difficulty = data.difficulty;
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        PlayerSaveData data = JsonUtility.FromJson<PlayerSaveData>(json);
+                        
+                        info.isEmpty = false;
+                        info.saveTime = data.saveTime;
+                        info.currentScene = data.currentScene;
+                        info.playTimeSeconds = data.playTimeSeconds;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -321,11 +445,11 @@ namespace MadKnight.Save
         }
         
         /// <summary>
-        /// Get slot file name (save01.json, save02.json, ...)
+        /// Get slot file name (save01.dat, save02.dat, ...)
         /// </summary>
         private static string GetSlotFileName(int slotNumber)
         {
-            return $"save{slotNumber:D2}.json"; // D2 = 2 digits: 01, 02, 03, ...
+            return $"save{slotNumber:D2}.dat"; // Changed from .json to .dat
         }
         
         #endregion
@@ -561,8 +685,6 @@ namespace MadKnight.Save
         public string saveTime;       // "2024-01-15 14:30:00"
         public string currentScene;   // "Level01"
         public float playTimeSeconds; // 1234.5
-        public int playerLevel;       // 1
-        public int difficulty;        // 0-3
         
         // Utility
         public string GetPlayTimeFormatted()
@@ -571,22 +693,11 @@ namespace MadKnight.Save
             int minutes = (int)((playTimeSeconds % 3600) / 60);
             return $"{hours}h {minutes}m";
         }
-        
-        public string GetDifficultyName()
-        {
-            switch (difficulty)
-            {
-                case 0: return "Easy";
-                case 1: return "Normal";
-                case 2: return "Hard";
-                case 3: return "Nightmare";
-                default: return "Unknown";
-            }
-        }
     }
     
     /// <summary>
-    /// Player Save Data - Tất cả dữ liệu cần lưu
+    /// Player Save Data - CHỈ lưu những dữ liệu cần thiết
+    /// Dữ liệu được mã hóa AES-256 khi lưu vào file
     /// </summary>
     [System.Serializable]
     public class PlayerSaveData
@@ -597,35 +708,12 @@ namespace MadKnight.Save
         public float playTimeSeconds;
         public int slotNumber;        // 0 = autosave, 1-10 = manual slots
         
-        // Scene & Position
+        // Scene & Position (CHỈ cần thiết)
         public string currentScene;
         public Vector3 playerPosition;
-        public Quaternion playerRotation;
         
-        // Player Stats
-        public float playerHealth;
-        public float playerStamina;
-        public int playerLevel;
-        public int playerExperience;
-        
-        // Checkpoint
+        // Checkpoint (CHỈ cần thiết)
         public string checkpointScene;
         public Vector3 checkpointPosition;
-        
-        // Inventory (sẽ mở rộng sau)
-        public string[] inventoryItems;
-        public int[] inventoryQuantities;
-        
-        // Game Progress
-        public bool[] levelsUnlocked;
-        public bool[] achievementsUnlocked;
-        public int difficulty; // 0=Easy, 1=Normal, 2=Hard, 3=Nightmare
-        
-        // Settings (sync với GameSettings)
-        public int qualityLevel;
-        public bool fullscreen;
-        public float masterVolume;
-        public float musicVolume;
-        public float sfxVolume;
     }
 }

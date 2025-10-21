@@ -26,7 +26,7 @@ namespace MadKnight
             
             if (currentSaveData != null)
             {
-                Debug.Log($"Đã load game data: Level {currentSaveData.playerLevel}, Scene: {currentSaveData.currentScene}");
+                Debug.Log($"Đã load game data: Scene: {currentSaveData.currentScene}");
                 // Áp dụng dữ liệu vào game
                 // Ví dụ: Set vị trí player, health, etc.
             }

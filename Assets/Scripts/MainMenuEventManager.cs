@@ -67,7 +67,7 @@ namespace MadKnight
             
             if (saveData != null)
             {
-                Debug.Log($"Đang load game... Scene: {saveData.currentScene}, Level: {saveData.playerLevel}");
+                Debug.Log($"Đang load game... Scene: {saveData.currentScene}");
                 // Load scene từ save data
                 SceneManager.LoadScene(saveData.currentScene);
             }
