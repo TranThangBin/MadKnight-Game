@@ -1,0 +1,112 @@
+name: Unity CI — Build ISLA
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-unity-version:
+    name: Detect Unity Version
+    runs-on: ubuntu-latest
+    outputs:
+      unity_version: ${{ steps.getver.outputs.unity_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read ProjectVersion.txt
+        id: getver
+        shell: bash
+        run: |
+          ver=$(grep -Eo 'm_EditorVersion:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]+' ProjectSettings/ProjectVersion.txt | awk '{print $2}')
+          if [ -z "$ver" ]; then
+            echo "❌ Cannot detect Unity version"; exit 1
+          fi
+          echo "unity_version=$ver" >> "$GITHUB_OUTPUT"
+          echo "Detected Unity: $ver"
+
+  build:
+    name: Build (${{ matrix.targetPlatform }})
+    needs: detect-unity-version
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform: [ StandaloneWindows64, Linux64 ] # add WebGL/Android/iOS later if needed
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Optional but speeds up a lot: cache Library/ keyed by manifest.json
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-${{ hashFiles('Packages/manifest.json') }}
+          restore-keys: |
+            Library-${{ runner.os }}-
+
+      - name: Set up Unity
+        uses: game-ci/unity-setup@v4
+        with:
+          unityVersion: ${{ needs.detect-unity-version.outputs.unity_version }}
+
+      # If you use a personal/pro license via ULF:
+      - name: Activate Unity (ULF)
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          if [ -z "$UNITY_LICENSE" ]; then
+            echo "UNITY_LICENSE not set — skipping activation step (builder may still work if license server is used)"; exit 0
+          fi
+          echo "License provided via UNITY_LICENSE (ULF)."
+
+      - name: Build project
+        uses: game-ci/unity-builder@v4
+        with:
+          projectPath: .
+          targetPlatform: ${{ matrix.targetPlatform }}
+          buildName: ISLA
+          versioning: Semantic
+          customParameters: -quit -nographics
+          allowDirtyBuild: true
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ISLA-${{ matrix.targetPlatform }}
+          path: build/${{ matrix.targetPlatform }}
+
+  # Optional: publish on tag v*
+  release:
+    name: Release on tag
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Zip artifacts
+        run: |
+          cd dist
+          for d in */; do
+            zip -r "${d%/}.zip" "$d"
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
