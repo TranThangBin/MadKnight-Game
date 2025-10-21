@@ -1,4 +1,4 @@
-name: Unity CI — Build ISLA
+name: Unity CI — Build ISLA (Windows only)
 
 on:
   push:
@@ -16,15 +16,9 @@ concurrency:
 
 jobs:
   build:
-    name: Build (${{ matrix.targetPlatform }})
+    name: Build Windows (StandaloneWindows64)
     runs-on: ubuntu-latest
-    # Tránh lỗi secrets không được truyền khi là PR từ fork
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # Hỗ trợ: StandaloneWindows64, WebGL, Android, StandaloneOSX (runner macOS)
-        targetPlatform: [ StandaloneWindows64, WebGL ]
 
     steps:
       - name: Checkout repository
@@ -32,7 +26,6 @@ jobs:
         with:
           lfs: true
 
-      # Cache Library/ để tăng tốc (key theo manifest + version Unity)
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
@@ -42,7 +35,6 @@ jobs:
             Library-${{ runner.os }}-
             Library-
 
-      # Fail sớm nếu thiếu license
       - name: Verify license secrets
         shell: bash
         env:
@@ -55,19 +47,16 @@ jobs:
           fi
           echo "✅ License secret detected."
 
-      - name: Build project
+      - name: Build project (Windows)
         uses: game-ci/unity-builder@v4
         env:
-          # Chọn 1 trong 2 cách cấp phép:
-          # - Personal: dùng UNITY_LICENSE (nội dung .ulf)
-          # - Pro/Plus: UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD
           UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL:   ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          targetPlatform: ${{ matrix.targetPlatform }}
-          unityVersion: auto                 # Tự đọc từ ProjectSettings/ProjectVersion.txt
+          targetPlatform: StandaloneWindows64
+          unityVersion: auto
           buildName: ISLA
           buildsPath: build
           allowDirtyBuild: true
@@ -75,19 +64,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ISLA-${{ matrix.targetPlatform }}
-          path: build/${{ matrix.targetPlatform }}
-
-  # Nếu là PR từ fork, chạy lint/compile nhẹ (không cần secrets) để vẫn có CI cho PR
-  pr-lite:
-    name: PR Lite (no secrets)
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Validate project files exist
-        run: |
-          test -d Assets && test -d ProjectSettings && echo "OK: Unity project structure found."
+          name: ISLA-Windows64
+          path: build/StandaloneWindows64
