@@ -18,16 +18,21 @@ jobs:
   build:
     name: Build (${{ matrix.targetPlatform }})
     runs-on: ubuntu-latest
+    # Tránh lỗi secrets không được truyền khi là PR từ fork
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
     strategy:
       fail-fast: false
       matrix:
-        targetPlatform: [ StandaloneWindows64, Linux64 ]
+        # Hỗ trợ: StandaloneWindows64, WebGL, Android, StandaloneOSX (runner macOS)
+        targetPlatform: [ StandaloneWindows64, WebGL ]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           lfs: true
 
+      # Cache Library/ để tăng tốc (key theo manifest + version Unity)
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
@@ -37,15 +42,32 @@ jobs:
             Library-${{ runner.os }}-
             Library-
 
+      # Fail sớm nếu thiếu license
+      - name: Verify license secrets
+        shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL:  ${{ secrets.UNITY_SERIAL }}
+        run: |
+          if [ -z "${UNITY_LICENSE:-}" ] && [ -z "${UNITY_SERIAL:-}" ]; then
+            echo "❌ Missing license: set UNITY_LICENSE (ULF) or UNITY_SERIAL (+ UNITY_EMAIL + UNITY_PASSWORD)."
+            exit 1
+          fi
+          echo "✅ License secret detected."
+
       - name: Build project
         uses: game-ci/unity-builder@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}        # if needed for your license
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}  # if needed for your license
+          # Chọn 1 trong 2 cách cấp phép:
+          # - Personal: dùng UNITY_LICENSE (nội dung .ulf)
+          # - Pro/Plus: UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD
+          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL:   ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: ${{ matrix.targetPlatform }}
-          unityVersion: auto
+          unityVersion: auto                 # Tự đọc từ ProjectSettings/ProjectVersion.txt
           buildName: ISLA
           buildsPath: build
           allowDirtyBuild: true
@@ -55,3 +77,17 @@ jobs:
         with:
           name: ISLA-${{ matrix.targetPlatform }}
           path: build/${{ matrix.targetPlatform }}
+
+  # Nếu là PR từ fork, chạy lint/compile nhẹ (không cần secrets) để vẫn có CI cho PR
+  pr-lite:
+    name: PR Lite (no secrets)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Validate project files exist
+        run: |
+          test -d Assets && test -d ProjectSettings && echo "OK: Unity project structure found."
