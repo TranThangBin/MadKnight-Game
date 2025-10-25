@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 namespace MadKnight.UI
 {
     /// <summary>
-    /// Load Game Panel - Hiển thị 11 save slots (1 auto + 10 manual)
+    /// Load Game Panel - Hiển thị save game sử dụng NSaveSystem
     /// </summary>
     public class LoadGamePanel : MonoBehaviour
     {
@@ -16,13 +16,13 @@ namespace MadKnight.UI
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private GameObject panelRoot;
         
-        [Header("Save Slots")]
-        [SerializeField] private SaveSlotUI autoSaveSlot;       // Slot đặc biệt cho auto save
-        [SerializeField] private SaveSlotUI[] manualSlots;      // 10 slots cho manual saves
+        [Header("Save Slot")]
+        [SerializeField] private SaveSlotUI saveSlot;  // Chỉ có 1 save slot duy nhất
         
         [Header("Buttons")]
         [SerializeField] private Button backButton;
-        [SerializeField] private Button deleteAllButton;
+        [SerializeField] private Button loadButton;
+        [SerializeField] private Button deleteButton;
         
         [Header("Confirmation Dialog")]
         [SerializeField] private GameObject confirmDialog;
@@ -34,7 +34,7 @@ namespace MadKnight.UI
         [SerializeField] private float fadeSpeed = 5f;
         
         private bool isVisible = false;
-        private int pendingDeleteSlot = -1; // -1 = none, 0 = auto save, 1-10 = manual slots
+        private bool hasSaveFile = false;
         
         private void Awake()
         {
@@ -81,10 +81,16 @@ namespace MadKnight.UI
                 backButton.onClick.AddListener(OnBackClick);
             }
             
-            // Delete all button
-            if (deleteAllButton != null)
+            // Load button
+            if (loadButton != null)
             {
-                deleteAllButton.onClick.AddListener(OnDeleteAllClick);
+                loadButton.onClick.AddListener(OnLoadClick);
+            }
+            
+            // Delete button
+            if (deleteButton != null)
+            {
+                deleteButton.onClick.AddListener(OnDeleteClick);
             }
             
             // Confirmation buttons
@@ -98,22 +104,11 @@ namespace MadKnight.UI
                 confirmNoButton.onClick.AddListener(OnConfirmNo);
             }
             
-            // Auto save slot
-            if (autoSaveSlot != null)
+            // Save slot click handlers
+            if (saveSlot != null)
             {
-                autoSaveSlot.onLoadClicked += () => LoadFromAutoSave();
-                autoSaveSlot.onDeleteClicked += () => ShowDeleteConfirm(0);
-            }
-            
-            // Manual slots
-            for (int i = 0; i < manualSlots.Length; i++)
-            {
-                if (manualSlots[i] != null)
-                {
-                    int slotIndex = i; // Capture for closure
-                    manualSlots[i].onLoadClicked += () => LoadFromSlot(slotIndex + 1);
-                    manualSlots[i].onDeleteClicked += () => ShowDeleteConfirm(slotIndex + 1);
-                }
+                saveSlot.onLoadClicked += OnLoadClick;
+                saveSlot.onDeleteClicked += OnDeleteClick;
             }
         }
         
@@ -143,10 +138,10 @@ namespace MadKnight.UI
                     Debug.LogError("[LoadGamePanel] Panel Root is NULL!");
                 }
                 
-                // Refresh all slots
-                Debug.Log("[LoadGamePanel] Starting RefreshAllSlots...");
-                RefreshAllSlots();
-                Debug.Log("[LoadGamePanel] RefreshAllSlots completed!");
+                // Refresh save slot
+                Debug.Log("[LoadGamePanel] Starting RefreshSaveSlot...");
+                RefreshSaveSlot();
+                Debug.Log("[LoadGamePanel] RefreshSaveSlot completed!");
                 
                 Debug.Log("[LoadGamePanel] Starting FadeIn coroutine...");
                 StartCoroutine(FadeIn());
@@ -202,127 +197,61 @@ namespace MadKnight.UI
         
         #endregion
         
-        #region Refresh Slots
+        #region Refresh Slot
         
-        private void RefreshAllSlots()
+        private void RefreshSaveSlot()
         {
             try
             {
-                Debug.Log("[LoadGamePanel] RefreshAllSlots - Start");
+                Debug.Log("[LoadGamePanel] RefreshSaveSlot - Start");
                 
-                // Refresh auto save slot
-                RefreshAutoSaveSlot();
-                
-                // Refresh manual slots
-                if (manualSlots != null && manualSlots.Length > 0)
+                if (saveSlot == null)
                 {
-                    Debug.Log($"[LoadGamePanel] Refreshing {manualSlots.Length} manual slots");
-                    for (int i = 0; i < manualSlots.Length && i < 10; i++)
-                    {
-                        RefreshManualSlot(i + 1);
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("[LoadGamePanel] Manual slots array is null or empty!");
-                }
-                
-                Debug.Log("[LoadGamePanel] RefreshAllSlots - Complete");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[LoadGamePanel] Error in RefreshAllSlots: {e.Message}\n{e.StackTrace}");
-            }
-        }
-        
-        private void RefreshAutoSaveSlot()
-        {
-            try
-            {
-                if (autoSaveSlot == null)
-                {
-                    Debug.LogWarning("[LoadGamePanel] Auto save slot is null!");
+                    Debug.LogWarning("[LoadGamePanel] Save slot UI is null!");
                     return;
                 }
                 
-                Debug.Log("[LoadGamePanel] Refreshing auto save slot...");
+                // Check if save file exists
+                hasSaveFile = NSaveSystem.HasSaveFile();
+                Debug.Log($"[LoadGamePanel] Has save file: {hasSaveFile}");
                 
-                bool hasAutoSave = SaveSystem.HasAnySaveFile();
-                Debug.Log($"[LoadGamePanel] Has auto save: {hasAutoSave}");
-                
-                if (hasAutoSave)
+                if (hasSaveFile)
                 {
-                    MadKnight.Save.PlayerSaveData data = SaveSystem.LoadAutoSave();
-                    if (data != null)
-                    {
-                        Debug.Log($"[LoadGamePanel] Auto save data loaded: {data.currentScene}");
-                        autoSaveSlot.SetSlotData(
-                            slotNumber: 0,
-                            isEmpty: false,
-                            saveTime: data.saveTime,
-                            sceneName: data.currentScene,
-                            playTime: data.playTimeSeconds,
-                            level: 0,
-                            difficulty: 0
-                        );
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[LoadGamePanel] Auto save data is null");
-                        autoSaveSlot.SetEmpty(0);
-                    }
-                }
-                else
-                {
-                    Debug.Log("[LoadGamePanel] No auto save file found");
-                    autoSaveSlot.SetEmpty(0);
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[LoadGamePanel] Error in RefreshAutoSaveSlot: {e.Message}\n{e.StackTrace}");
-            }
-        }
-        
-        private void RefreshManualSlot(int slotNumber)
-        {
-            try
-            {
-                if (slotNumber < 1 || slotNumber > 10) return;
-                
-                int arrayIndex = slotNumber - 1;
-                if (arrayIndex >= manualSlots.Length || manualSlots[arrayIndex] == null)
-                {
-                    Debug.LogWarning($"[LoadGamePanel] Manual slot {slotNumber} is null or out of range!");
-                    return;
-                }
-                
-                Debug.Log($"[LoadGamePanel] Refreshing manual slot {slotNumber}...");
-                
-                SaveSlotInfo info = SaveSystem.GetSlotInfo(slotNumber);
-                
-                if (info.isEmpty)
-                {
-                    Debug.Log($"[LoadGamePanel] Slot {slotNumber} is empty");
-                    manualSlots[arrayIndex].SetEmpty(slotNumber);
-                }
-                else
-                {
-                    Debug.Log($"[LoadGamePanel] Slot {slotNumber} has data: {info.currentScene}");
-                    manualSlots[arrayIndex].SetSlotData(
-                        slotNumber: slotNumber,
+                    // Đọc save data từ file (không load vào game)
+                    NSaveSystem.SaveData data = NSaveSystem.ReadSaveDataFromFile();
+                    
+                    Debug.Log($"[LoadGamePanel] Save data loaded: {data.CurrentScene}, Time: {data.SaveTime}");
+                    
+                    // Update UI
+                    saveSlot.SetSlotData(
+                        slotNumber: 1,
                         isEmpty: false,
-                        saveTime: info.saveTime,
-                        sceneName: info.currentScene,
-                        playTime: info.playTimeSeconds,
+                        saveTime: data.SaveTime,
+                        sceneName: data.CurrentScene,
+                        playTime: data.PlayTimeSeconds,
                         level: 0,
                         difficulty: 0
                     );
+                    
+                    // Enable load/delete buttons
+                    if (loadButton != null) loadButton.interactable = true;
+                    if (deleteButton != null) deleteButton.interactable = true;
                 }
+                else
+                {
+                    Debug.Log("[LoadGamePanel] No save file found");
+                    saveSlot.SetEmpty(1);
+                    
+                    // Disable load/delete buttons
+                    if (loadButton != null) loadButton.interactable = false;
+                    if (deleteButton != null) deleteButton.interactable = false;
+                }
+                
+                Debug.Log("[LoadGamePanel] RefreshSaveSlot - Complete");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[LoadGamePanel] Error refreshing slot {slotNumber}: {e.Message}\n{e.StackTrace}");
+                Debug.LogError($"[LoadGamePanel] Error in RefreshSaveSlot: {e.Message}\n{e.StackTrace}");
             }
         }
         
@@ -330,79 +259,82 @@ namespace MadKnight.UI
         
         #region Load/Delete Actions
         
-        private void LoadFromAutoSave()
+        private void OnLoadClick()
         {
-            Debug.Log("[LoadGamePanel] Loading auto save...");
-            
-            MadKnight.Save.PlayerSaveData data = SaveSystem.LoadAutoSave();
-            if (data != null)
+            if (!hasSaveFile)
             {
-                // Load scene
-                SceneManager.LoadScene(data.currentScene);
-            }
-            else
-            {
-                Debug.LogError("Failed to load auto save!");
-            }
-        }
-        
-        private void LoadFromSlot(int slotNumber)
-        {
-            Debug.Log($"[LoadGamePanel] Loading from slot {slotNumber}...");
-            
-            if (!SaveSystem.IsSlotUsed(slotNumber))
-            {
-                Debug.LogWarning($"Slot {slotNumber} is empty!");
+                Debug.LogWarning("[LoadGamePanel] No save file to load!");
                 return;
             }
             
-            PlayerSaveData data = SaveSystem.LoadFromSlot(slotNumber);
-            if (data != null)
+            Debug.Log("[LoadGamePanel] Loading game...");
+            
+            try
             {
-                // Copy to auto save để tiếp tục chơi
-                SaveSystem.CopySlotToAutoSave(slotNumber);
+                // Đọc save data để lấy scene cần load
+                NSaveSystem.SaveData data = NSaveSystem.ReadSaveDataFromFile();
                 
-                // Load scene
-                SceneManager.LoadScene(data.currentScene);
+                if (string.IsNullOrEmpty(data.CurrentScene))
+                {
+                    Debug.LogError("[LoadGamePanel] Save data không có thông tin scene!");
+                    return;
+                }
+                
+                // Set flag để GameManager tự động load save data khi khởi tạo
+                NSaveSystem.SetLoadOnNextInit();
+                
+                Debug.Log($"[LoadGamePanel] Loading scene: {data.CurrentScene}");
+                Hide();
+                
+                // Load scene - GameManager sẽ tự động apply save data trong Start()
+                SceneManager.LoadScene(data.CurrentScene);
             }
-            else
+            catch (System.Exception e)
             {
-                Debug.LogError($"Failed to load from slot {slotNumber}!");
+                Debug.LogError($"[LoadGamePanel] Lỗi khi load game: {e.Message}");
             }
         }
         
-        private void ShowDeleteConfirm(int slotNumber)
+        private void OnDeleteClick()
         {
-            pendingDeleteSlot = slotNumber;
+            if (!hasSaveFile)
+            {
+                Debug.LogWarning("[LoadGamePanel] No save file to delete!");
+                return;
+            }
             
+            // Show confirmation dialog
             if (confirmDialog != null)
             {
                 confirmDialog.SetActive(true);
                 
-                string slotName = slotNumber == 0 ? "Auto Save" : $"Slot {slotNumber}";
                 if (confirmText != null)
                 {
-                    confirmText.text = $"Delete {slotName}?\nThis action cannot be undone.";
+                    confirmText.text = "Delete save file?\nThis action cannot be undone.";
                 }
             }
         }
         
         private void OnConfirmYes()
         {
-            if (pendingDeleteSlot == 0)
-            {
-                // Delete auto save
-                SaveSystem.DeleteAutoSave();
-                RefreshAutoSaveSlot();
-            }
-            else if (pendingDeleteSlot >= 1 && pendingDeleteSlot <= 10)
-            {
-                // Delete manual slot
-                SaveSystem.DeleteSlot(pendingDeleteSlot);
-                RefreshManualSlot(pendingDeleteSlot);
-            }
+            Debug.Log("[LoadGamePanel] Deleting save file...");
             
-            pendingDeleteSlot = -1;
+            try
+            {
+                string saveFilePath = NSaveSystem.SaveFileName();
+                if (System.IO.File.Exists(saveFilePath))
+                {
+                    System.IO.File.Delete(saveFilePath);
+                    Debug.Log("[LoadGamePanel] Save file deleted successfully!");
+                }
+                
+                // Refresh UI
+                RefreshSaveSlot();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[LoadGamePanel] Error deleting save file: {e.Message}");
+            }
             
             if (confirmDialog != null)
             {
@@ -412,35 +344,10 @@ namespace MadKnight.UI
         
         private void OnConfirmNo()
         {
-            pendingDeleteSlot = -1;
-            
             if (confirmDialog != null)
             {
                 confirmDialog.SetActive(false);
             }
-        }
-        
-        private void OnDeleteAllClick()
-        {
-            if (confirmDialog != null)
-            {
-                confirmDialog.SetActive(true);
-                
-                if (confirmText != null)
-                {
-                    confirmText.text = "Delete ALL saves?\nThis will delete auto save and all slots!\nThis action cannot be undone.";
-                }
-                
-                pendingDeleteSlot = -99; // Special code for delete all
-            }
-        }
-        
-        private void DeleteAllSaves()
-        {
-            SaveSystem.DeleteAllSaves();
-            RefreshAllSlots();
-            
-            Debug.Log("[LoadGamePanel] All saves deleted!");
         }
         
         #endregion
@@ -450,38 +357,6 @@ namespace MadKnight.UI
         private void OnBackClick()
         {
             Hide();
-        }
-        
-        #endregion
-        
-        #region Confirmation Dialog (Modified)
-        
-        private void OnConfirmYesModified()
-        {
-            if (pendingDeleteSlot == -99)
-            {
-                // Delete all
-                DeleteAllSaves();
-            }
-            else if (pendingDeleteSlot == 0)
-            {
-                // Delete auto save
-                SaveSystem.DeleteAutoSave();
-                RefreshAutoSaveSlot();
-            }
-            else if (pendingDeleteSlot >= 1 && pendingDeleteSlot <= 10)
-            {
-                // Delete manual slot
-                SaveSystem.DeleteSlot(pendingDeleteSlot);
-                RefreshManualSlot(pendingDeleteSlot);
-            }
-            
-            pendingDeleteSlot = -1;
-            
-            if (confirmDialog != null)
-            {
-                confirmDialog.SetActive(false);
-            }
         }
         
         #endregion

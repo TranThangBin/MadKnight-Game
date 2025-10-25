@@ -353,5 +353,38 @@ namespace MadKnight
                     throw new ArgumentOutOfRangeException();
             }
         }
+        #region Save And Load
+        public void Save(ref NPlayerSaveData data)
+        {
+            data.Position = transform.position;
+            Debug.Log($"[Player] Saving position: {data.Position}");
+        }
+        public void Load(NPlayerSaveData data)
+        {
+            Debug.Log($"[Player] Loading position: {data.Position} (current: {transform.position})");
+            
+            // Set position trực tiếp
+            transform.position = data.Position;
+            
+            // Nếu có Rigidbody2D, reset velocity và set position qua Rigidbody
+            if (_rb != null)
+            {
+                _rb.linearVelocity = Vector2.zero;
+                _rb.position = data.Position;
+                Debug.Log($"[Player] Reset Rigidbody velocity and position");
+            }
+            
+            Debug.Log($"[Player] Position after load: {transform.position}");
+        }
+        #endregion
     }
+}
+
+/// <summary>
+/// Simple Player Save Data for NSaveSystem
+/// </summary>
+[System.Serializable]
+public struct NPlayerSaveData
+{
+    public UnityEngine.Vector3 Position;
 }
