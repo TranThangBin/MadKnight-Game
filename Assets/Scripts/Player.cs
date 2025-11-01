@@ -2,6 +2,7 @@ using System;
 using MadKnight.Enums;
 using MadKnight.ScriptableObjects;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace MadKnight
 {
@@ -46,6 +47,13 @@ namespace MadKnight
         private bool _isOnWallRight;
         private bool _isOnWallLeft;
 
+        private event UnityAction ResetGScale;
+
+        private void OnDestroy()
+        {
+            ResetGScale = null;
+        }
+
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
@@ -54,6 +62,9 @@ namespace MadKnight
 
             _state = PlayerState.Idle;
             _jumpRemaining = _stats.MaxJumpCount;
+
+            var gScale = _rb.gravityScale;
+            ResetGScale += () => _rb.gravityScale = gScale;
         }
 
         private void Update()
@@ -229,13 +240,9 @@ namespace MadKnight
                     break;
                 case PlayerState.WallClimb:
                     {
-                        if (_isOnFloor)
+                        if (_rb.gravityScale != 0)
                         {
-                            _rb.bodyType = RigidbodyType2D.Dynamic;
-                        }
-                        else if (_rb.bodyType != RigidbodyType2D.Kinematic)
-                        {
-                            _rb.bodyType = RigidbodyType2D.Kinematic;
+                            _rb.gravityScale = 0;
                         }
 
                         if (_isOnFloor && _horizontalAxis != 0)
@@ -249,7 +256,7 @@ namespace MadKnight
 
                         if (_state != PlayerState.WallClimb)
                         {
-                            _rb.bodyType = RigidbodyType2D.Dynamic;
+                            ResetGScale.Invoke();
                         }
                     }
                     break;
@@ -295,6 +302,7 @@ namespace MadKnight
             var wallBounceYForce = _stats.JumpForce * 1.2f;
 
             var horizontalXVelocity = _stats.Speed * _horizontalAxis;
+            var verticalYVelocity = _stats.Speed * _stats.WallClimbSpeedMultiplier * _verticalAxis;
 
             switch (_state)
             {
@@ -344,7 +352,7 @@ namespace MadKnight
                     {
                         _rb.linearVelocity = new Vector2(
                             _rb.linearVelocityX,
-                            _stats.Speed * _stats.WallClimbSpeedMultiplier * _verticalAxis
+                            verticalYVelocity
                         );
                     }
                     break;
