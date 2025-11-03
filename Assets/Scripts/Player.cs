@@ -64,7 +64,7 @@ namespace MadKnight
             {
                 Camera.main.transform.position = new Vector3(
                         transform.position.x,
-                        transform.position.y,
+                        transform.position.y+4,
                         Camera.main.transform.position.z
                 );
             }
