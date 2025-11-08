@@ -11,13 +11,12 @@ namespace MadKnight
     {
         private enum PlayerState
         {
-            Idle,
-            Walking,
+            GroundWork,
             Crouching,
             Jumping,
             Airborne,
-            WallSlide,
-            WallBounce,
+            // WallSlide,
+            // WallBounce,
             WallClimb,
         }
 
@@ -60,7 +59,7 @@ namespace MadKnight
             _anim = GetComponent<Animator>();
             _sr = GetComponent<SpriteRenderer>();
 
-            _state = PlayerState.Idle;
+            _state = PlayerState.GroundWork;
             _jumpRemaining = _stats.MaxJumpCount;
 
             var gScale = _rb.gravityScale;
@@ -72,6 +71,20 @@ namespace MadKnight
             _horizontalAxis = Input.GetAxis("Horizontal");
             _verticalAxis = Input.GetAxis("Vertical");
 
+            if (_direction > 0 && _sr.flipX)
+            {
+                _sr.flipX = false;
+            }
+            else if (_direction < 0 && !_sr.flipX)
+            {
+                _sr.flipX = true;
+            }
+
+            HandleStateTransition();
+        }
+
+        private void HandleStateTransition()
+        {
             _anim.SetFloat(
                     nameof(PlayerAnimationEnum.FHorizontalVelocity),
                     _rb.linearVelocityX
@@ -93,20 +106,6 @@ namespace MadKnight
                     _state == PlayerState.WallClimb
             );
 
-            if (_direction > 0 && _sr.flipX)
-            {
-                _sr.flipX = false;
-            }
-            else if (_direction < 0 && !_sr.flipX)
-            {
-                _sr.flipX = true;
-            }
-
-            HandleStateTransition();
-        }
-
-        private void HandleStateTransition()
-        {
             var initState = _state;
 
             bool isJumpClicked,
@@ -124,37 +123,9 @@ namespace MadKnight
 
             switch (_state)
             {
-                case PlayerState.Idle:
+                case PlayerState.GroundWork:
                     {
-                        if (_horizontalAxis != 0)
-                        {
-                            _state = PlayerState.Walking;
-                        }
-                        else if (isFacingWall && _verticalAxis != 0)
-                        {
-                            _state = PlayerState.WallClimb;
-                        }
-                        else if (_isOnFloor && isCrouchClicked)
-                        {
-                            _state = PlayerState.Crouching;
-                        }
-                        else if (isJumpClicked && jumpAvailable)
-                        {
-                            _state = PlayerState.Jumping;
-                        }
-                        else if (!_isOnFloor)
-                        {
-                            _state = PlayerState.Airborne;
-                        }
-                    }
-                    break;
-                case PlayerState.Walking:
-                    {
-                        if (_rb.linearVelocityX == 0)
-                        {
-                            _state = PlayerState.Idle;
-                        }
-                        else if (isFacingWall && _verticalAxis != 0)
+                        if (isFacingWall && _verticalAxis != 0)
                         {
                             _state = PlayerState.WallClimb;
                         }
@@ -194,15 +165,7 @@ namespace MadKnight
                         }
                         else if (_isOnFloor)
                         {
-                            if (_rb.linearVelocityX == 0)
-                            {
-                                _state = PlayerState.Idle;
-                            }
-                            else
-                            {
-                                _state = PlayerState.Walking;
-                            }
-
+                            _state = PlayerState.GroundWork;
                             _jumpRemaining = _stats.MaxJumpCount;
                         }
                     }
@@ -225,14 +188,7 @@ namespace MadKnight
                             }
                             else if (!isCrouchClicked)
                             {
-                                if (_rb.linearVelocityX == 0)
-                                {
-                                    _state = PlayerState.Idle;
-                                }
-                                else
-                                {
-                                    _state = PlayerState.Walking;
-                                }
+                                _state = PlayerState.GroundWork;
                             }
                         }
 
@@ -255,7 +211,7 @@ namespace MadKnight
 
                         if (_isOnFloor && _horizontalAxis != 0)
                         {
-                            _state = PlayerState.Walking;
+                            _state = PlayerState.GroundWork;
                         }
                         else if (!_isOnWallLeft && !_isOnWallRight && !_isOnFloor)
                         {
@@ -326,7 +282,7 @@ namespace MadKnight
                     }
                     break;
                 case PlayerState.Airborne:
-                case PlayerState.Walking:
+                case PlayerState.GroundWork:
                 case PlayerState.Crouching:
                     {
                         if (_state == PlayerState.Crouching)
@@ -343,15 +299,17 @@ namespace MadKnight
                             _direction = -1;
                         }
 
-
-                        _rb.linearVelocity = new Vector2(
-                            Mathf.Lerp(
-                                _rb.linearVelocityX,
-                                horizontalXVelocity,
-                                movementSmoothing
-                            ),
-                            _rb.linearVelocityY
-                        );
+                        if (horizontalXVelocity != 0)
+                        {
+                            _rb.linearVelocity = new Vector2(
+                                Mathf.Lerp(
+                                    _rb.linearVelocityX,
+                                    horizontalXVelocity,
+                                    movementSmoothing
+                                ),
+                                _rb.linearVelocityY
+                            );
+                        }
                     }
                     break;
                 case PlayerState.WallClimb:
@@ -361,8 +319,6 @@ namespace MadKnight
                             verticalYVelocity
                         );
                     }
-                    break;
-                case PlayerState.Idle:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
