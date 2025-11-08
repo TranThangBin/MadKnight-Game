@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 01668005cd79ea6f68e67a16978baebe
+guid: 54f6b64e59decb048acf58be327495f1
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -562286294553934866
-    second: PlayerFall_2_0
+      213: -1330035020505819154
+    second: PlayerClimb_3_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: PlayerFall_2_0
+      name: PlayerClimb_3_0
       rect:
         serializedVersion: 2
-        x: 135
-        y: 0
-        width: 412
-        height: 697
+        x: 183
+        y: 3
+        width: 346
+        height: 693
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ee3ca0f189b5238f0800000000000000
-      internalID: -562286294553934866
+      spriteID: ee7dbe71234ca8de0800000000000000
+      internalID: -1330035020505819154
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      PlayerFall_2_0: -562286294553934866
+      PlayerClimb_3_0: -1330035020505819154
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Prefabs/frame_03.png.meta
 guid: c9d685f41dc8b134b814df18739e3b2e
-========
-guid: 4a44e193fb41d51d9babc201bd9186e9
->>>>>>>> b9046dc (feat: jump animation):Assets/InternalAssets/Sprites/Player/PlayerFall/PlayerFall_1.png.meta
 TextureImporter:
   internalIDToNameTable:
   - first:

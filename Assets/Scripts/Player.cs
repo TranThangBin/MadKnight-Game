@@ -74,7 +74,7 @@ namespace MadKnight
 
             _anim.SetFloat(
                     nameof(PlayerAnimationEnum.FHorizontalVelocity),
-                    Mathf.Abs(_rb.linearVelocityX)
+                    _rb.linearVelocityX
             );
             _anim.SetFloat(
                     nameof(PlayerAnimationEnum.FVerticalVelocity),
@@ -83,6 +83,14 @@ namespace MadKnight
             _anim.SetBool(
                     nameof(PlayerAnimationEnum.BIsOnFloor),
                     _isOnFloor
+            );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsCrawling),
+                    _state == PlayerState.Crouching
+            );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsClimbing),
+                    _state == PlayerState.WallClimb
             );
 
             if (_direction > 0 && _sr.flipX)
@@ -312,7 +320,6 @@ namespace MadKnight
                         {
                             _rb.linearVelocity = new Vector2(_rb.linearVelocityX, 0);
                             _rb.AddForceY(_stats.JumpForce, ForceMode2D.Impulse);
-                            _anim.SetTrigger(nameof(PlayerAnimationEnum.TJump));
                             _jumpRemaining--;
                             _hasJumped = true;
                         }
@@ -320,7 +327,13 @@ namespace MadKnight
                     break;
                 case PlayerState.Airborne:
                 case PlayerState.Walking:
+                case PlayerState.Crouching:
                     {
+                        if (_state == PlayerState.Crouching)
+                        {
+                            horizontalXVelocity *= _stats.CrouchSpeedMultiplier;
+                        }
+
                         if (horizontalXVelocity > 0 && _direction != 1)
                         {
                             _direction = 1;
@@ -330,20 +343,13 @@ namespace MadKnight
                             _direction = -1;
                         }
 
+
                         _rb.linearVelocity = new Vector2(
                             Mathf.Lerp(
                                 _rb.linearVelocityX,
                                 horizontalXVelocity,
                                 movementSmoothing
                             ),
-                            _rb.linearVelocityY
-                        );
-                    }
-                    break;
-                case PlayerState.Crouching:
-                    {
-                        _rb.linearVelocity = new Vector2(
-                            horizontalXVelocity * _stats.CrouchSpeedMultiplier,
                             _rb.linearVelocityY
                         );
                     }

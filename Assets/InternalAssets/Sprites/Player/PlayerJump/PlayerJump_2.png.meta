@@ -1,19 +1,10 @@
 fileFormatVersion: 2
-<<<<<<< HEAD
 guid: d3f26f6b4ccdd4689ac45db6c8b069e3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6937817954938267909
-    second: 2_0
-=======
-guid: 2ef14ceb9a55c6148940320ea2b7951b
-TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: 2121007489110619165
-    second: frame_10_0
->>>>>>> b9046dc (feat: jump animation)
+      213: -4983944267923668679
+    second: PlayerJump_2_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -109,57 +100,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> fe4c65c (chore: update jump and fall animation)
-      name: PlayerJump_1_0
+      name: PlayerJump_2_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 700
-        height: 700
-<<<<<<< HEAD
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-=======
-      name: frame_10_0
-      rect:
-        serializedVersion: 2
-        x: 0
+        x: 164
         y: 2
-        width: 105
-        height: 266
+        width: 372
+        height: 696
       alignment: 0
       pivot: {x: 0, y: 0}
->>>>>>> b9046dc (feat: jump animation)
-=======
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
->>>>>>> fe4c65c (chore: update jump and fall animation)
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-<<<<<<< HEAD
-<<<<<<< HEAD
-      tessellationDetail: 0
-      bones: []
-      spriteID: 65750e544e257e5d2a8c08e06c8e4fe9
-      internalID: 1228588118
-=======
       tessellationDetail: -1
       bones: []
-      spriteID: d14b162e2155f6d10800000000000000
-      internalID: 2121007489110619165
->>>>>>> b9046dc (feat: jump animation)
-=======
-      tessellationDetail: 0
-      bones: []
-      spriteID: 65750e544e257e5d2a8c08e06c8e4fe9
-      internalID: 1228588118
->>>>>>> fe4c65c (chore: update jump and fall animation)
+      spriteID: 931c01a281975dab0800000000000000
+      internalID: -4983944267923668679
       vertices: []
       indices: 
       edges: []
@@ -168,15 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-<<<<<<< HEAD
-<<<<<<< HEAD
-    spriteID: 8081597f2c0d8cb1298b2567e6f251ba
-=======
     spriteID: 
->>>>>>> b9046dc (feat: jump animation)
-=======
-    spriteID: 8081597f2c0d8cb1298b2567e6f251ba
->>>>>>> fe4c65c (chore: update jump and fall animation)
     internalID: 0
     vertices: []
     indices: 
@@ -184,25 +133,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-<<<<<<< HEAD
-<<<<<<< HEAD
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":700.0,"y":700.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
-    nameFileIdTable:
-      PlayerJump_1_0: 1228588118
-=======
       entries: []
     nameFileIdTable:
-      frame_10_0: 2121007489110619165
->>>>>>> b9046dc (feat: jump animation)
-=======
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":700.0,"y":700.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
-    nameFileIdTable:
-      PlayerJump_1_0: 1228588118
->>>>>>> fe4c65c (chore: update jump and fall animation)
+      PlayerJump_2_0: -4983944267923668679
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

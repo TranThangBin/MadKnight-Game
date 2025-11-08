@@ -6,5 +6,7 @@ namespace MadKnight.Enums
         FVerticalVelocity,
         BIsOnFloor,
         TJump,
+        BIsCrawling,
+        BIsClimbing,
     }
 }

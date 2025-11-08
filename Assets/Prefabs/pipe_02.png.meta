@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Prefabs/pipe_02.png.meta
 guid: 0854d4bbd1398e5468c3b0cbc70e7ee3
-========
-guid: f2e8dcd771b240a2580e0fb51fdd60d7
->>>>>>>> b9046dc (feat: jump animation):Assets/InternalAssets/Sprites/Player/PlayerJump/PlayerJump_3.png.meta
 TextureImporter:
   internalIDToNameTable:
   - first:
