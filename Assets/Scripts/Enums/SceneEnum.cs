@@ -4,5 +4,6 @@ namespace MadKnight.Enums
     {
         MainMenu2,
         Level01,
+        GameIntro,
     }
 }
