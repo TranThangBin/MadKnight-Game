@@ -10,13 +10,15 @@ namespace MadKnight
     {
         [SerializeField] private Button _btnPlay;
         [SerializeField] private Button _btnContinue; 
+        [SerializeField] private Button _btnOptions;
         [SerializeField] private Button _btnQuit;
  
 
         private void Start()
         {
             _btnPlay.onClick.AddListener(BtnPlayClick);
-            _btnContinue.onClick.AddListener(BtnContinueClick); 
+            _btnContinue.onClick.AddListener(BtnContinueClick);
+            _btnOptions.onClick.AddListener(BtnOptionsClick);
             _btnQuit.onClick.AddListener(BtnQuitClick);
             
             // Kiểm tra và vô hiệu hóa nút Continue nếu không có file save
@@ -61,10 +63,10 @@ namespace MadKnight
                 Debug.LogWarning("Không có file save nào để tiếp tục!");
                 return;
             }
-            
+
             // Load auto save
             MadKnight.Save.PlayerSaveData saveData = SaveSystem.LoadAutoSave();
-            
+
             if (saveData != null)
             {
                 Debug.Log($"Đang load game... Scene: {saveData.currentScene}");
@@ -75,6 +77,10 @@ namespace MadKnight
             {
                 Debug.LogError("Không thể load file save!");
             }
+        }
+        private static void BtnOptionsClick()
+        {
+            SceneManager.LoadScene(sceneName: "minigame_sence");
         }
 
         
