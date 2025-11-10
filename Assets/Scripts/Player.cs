@@ -15,8 +15,7 @@ namespace MadKnight
             Crouching,
             Jumping,
             Airborne,
-            // WallSlide,
-            // WallBounce,
+            WallBounce,
             WallClimb,
             ClimbOver,
         }
@@ -38,7 +37,6 @@ namespace MadKnight
         private SpriteRenderer _sr;
 
         private PlayerState _state;
-        private PlayerState _prevState;
 
         private float _horizontalAxis;
         private float _verticalAxis;
@@ -54,6 +52,7 @@ namespace MadKnight
         private bool _isOnLedgeLeft;
         private float _climbOverTimer;
         private bool _climbOverFinished;
+        private bool _airControl;
 
         private event UnityAction ResetGScale;
 
@@ -139,6 +138,8 @@ namespace MadKnight
             {
                 case PlayerState.GroundWork:
                     {
+                        _airControl = true;
+
                         if (isOnWall && _verticalAxis != 0)
                         {
                             _state = PlayerState.WallClimb;
@@ -167,6 +168,7 @@ namespace MadKnight
                         {
                             _state = PlayerState.Airborne;
                             _hasJumped = false;
+                            _airControl = true;
                             _anim.SetTrigger(nameof(PlayerAnimationEnum.TJump));
                         }
                     }
@@ -226,10 +228,8 @@ namespace MadKnight
                     break;
                 case PlayerState.WallClimb:
                     {
-                        if (_rb.gravityScale != 0)
-                        {
-                            _rb.gravityScale = 0;
-                        }
+                        _rb.gravityScale = 0;
+                        _jumpRemaining = _stats.MaxJumpCount;
 
                         if (_isOnFloor && _horizontalAxis != 0)
                         {
@@ -243,6 +243,10 @@ namespace MadKnight
                         {
                             _state = PlayerState.ClimbOver;
                         }
+                        else if (isWallBounceClicked)
+                        {
+                            _state = PlayerState.WallBounce;
+                        }
 
                         if (_state != PlayerState.WallClimb)
                         {
@@ -252,36 +256,37 @@ namespace MadKnight
                     break;
                 case PlayerState.ClimbOver:
                     {
-                        if (_rb.gravityScale != 0)
-                        {
-                            _rb.gravityScale = 0;
-                            _rb.linearVelocity = Vector2.zero;
-                        }
+                        _rb.bodyType = RigidbodyType2D.Kinematic;
+                        _rb.linearVelocity = Vector2.zero;
 
                         _climbOverTimer -= Time.deltaTime;
-                        if (_climbOverFinished)
+                        if (_climbOverFinished && !isOnLedge)
                         {
                             _climbOverTimer = _climbTime;
                             _climbOverFinished = false;
                             _state = PlayerState.GroundWork;
-                            ResetGScale.Invoke();
+                            _rb.bodyType = RigidbodyType2D.Dynamic;
+                        }
+                    }
+                    break;
+                case PlayerState.WallBounce:
+                    {
+                        if (_hasWallBounced && !isOnWall)
+                        {
+                            _state = PlayerState.Airborne;
+                            _airControl = false;
+                            _hasWallBounced = false;
+                            _anim.SetTrigger(nameof(PlayerAnimationEnum.TJump));
                         }
                     }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-
-            if (initState != _state)
-            {
-                _prevState = initState;
-            }
         }
 
         private void FixedUpdate()
         {
-            bool notLedge;
-
             _isOnFloor = Physics2D.OverlapCircle(
                     _groundCheck.position,
                     0.2f,
@@ -303,15 +308,14 @@ namespace MadKnight
                         LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
                 );
 
-                notLedge = !Physics2D.OverlapCircle(
+                _isOnLedgeRight = !Physics2D.OverlapCircle(
                         new Vector2(
                             _ledgeCheckRight.position.x,
-                            _ledgeCheckRight.position.y + 0.2f
+                            _ledgeCheckRight.position.y + 0.3f
                         ),
                         0.2f,
                         LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
-                );
-                _isOnLedgeRight = notLedge && Physics2D.OverlapCircle(
+                ) && Physics2D.OverlapCircle(
                         _ledgeCheckRight.position,
                         0.2f,
                         LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
@@ -327,15 +331,14 @@ namespace MadKnight
                         LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
                 );
 
-                notLedge = !Physics2D.OverlapCircle(
+                _isOnLedgeLeft = !Physics2D.OverlapCircle(
                         new Vector2(
                             _ledgeCheckLeft.position.x,
-                            _ledgeCheckLeft.position.y + 0.2f
+                            _ledgeCheckLeft.position.y + 0.3f
                         ),
                         0.2f,
                         LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
-                );
-                _isOnLedgeLeft = notLedge && Physics2D.OverlapCircle(
+                ) && Physics2D.OverlapCircle(
                         _ledgeCheckLeft.position,
                         0.2f,
                         LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
@@ -384,7 +387,23 @@ namespace MadKnight
                             _direction = -1;
                         }
 
-                        if (horizontalXVelocity != 0)
+                        if (horizontalXVelocity != 0 && _state == PlayerState.Airborne && _airControl)
+                        {
+                            _rb.linearVelocity = new Vector2(
+                                Mathf.Lerp(
+                                    _rb.linearVelocityX,
+                                    horizontalXVelocity,
+                                    movementSmoothing
+                                ),
+                                _rb.linearVelocityY
+                            );
+                        }
+
+                        if (horizontalXVelocity != 0 &&
+                            (
+                                _state != PlayerState.Airborne ||
+                                _state == PlayerState.Airborne && _airControl
+                            ))
                         {
                             _rb.linearVelocity = new Vector2(
                                 Mathf.Lerp(
@@ -414,6 +433,21 @@ namespace MadKnight
                                     transform.position.x + _ledgeClimbOffset.x * _direction,
                                     transform.position.y + _ledgeClimbOffset.y
                             );
+                        }
+                    }
+                    break;
+                case PlayerState.WallBounce:
+                    {
+                        if (!_hasWallBounced)
+                        {
+                            _rb.linearVelocity = Vector2.zero;
+                            _rb.AddForce(new Vector2(
+                                        _stats.WallBounceForce * -_direction,
+                                        wallBounceYForce
+                            ), ForceMode2D.Impulse);
+                            _direction *= -1;
+                            _jumpRemaining--;
+                            _hasWallBounced = true;
                         }
                     }
                     break;
