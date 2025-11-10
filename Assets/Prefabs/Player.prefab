@@ -441,7 +441,8 @@ MonoBehaviour:
   _ledgeCheckRight: {fileID: 6218396898951379193}
   _ledgeCheckLeft: {fileID: 4721652245174416767}
   _ledgeClimbOffset: {x: 3, y: 6}
-  _climbTime: 0.85
+  _climbOverAnimationTime: 0.85
+  _deadAnimationTime: 1.017
 --- !u!1 &7573760691009353417
 GameObject:
   m_ObjectHideFlags: 0

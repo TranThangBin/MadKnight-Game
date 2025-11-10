@@ -3,6 +3,7 @@ using MadKnight.Enums;
 using MadKnight.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 namespace MadKnight
 {
@@ -18,6 +19,7 @@ namespace MadKnight
             WallBounce,
             WallClimb,
             ClimbOver,
+            Dead,
         }
 
         [SerializeField] private PlayerStatsSO _stats;
@@ -30,7 +32,8 @@ namespace MadKnight
         [SerializeField] private Transform _ledgeCheckRight;
         [SerializeField] private Transform _ledgeCheckLeft;
         [SerializeField] private Vector2 _ledgeClimbOffset;
-        [SerializeField] private float _climbTime;
+        [SerializeField] private float _climbOverAnimationTime;
+        [SerializeField] private float _deadAnimationTime;
 
         private Rigidbody2D _rb;
         private Animator _anim;
@@ -53,7 +56,8 @@ namespace MadKnight
         private float _climbOverTimer;
         private bool _climbOverFinished;
         private bool _airControl;
-        private float _maxClimbTime;
+        private float _maxClimbTimer;
+        private float _deadTimer;
 
         private event UnityAction ResetGScale;
 
@@ -70,7 +74,10 @@ namespace MadKnight
 
             _state = PlayerState.GroundWork;
             _jumpRemaining = _stats.MaxJumpCount;
-            _climbOverTimer = _climbTime;
+            _climbOverTimer = _climbOverAnimationTime;
+
+            const int restartDelay = 1;
+            _deadTimer = _deadAnimationTime + restartDelay;
 
             var gScale = _rb.gravityScale;
             ResetGScale += () => _rb.gravityScale = gScale;
@@ -140,10 +147,10 @@ namespace MadKnight
                 case PlayerState.GroundWork:
                     {
                         _airControl = true;
-                        _maxClimbTime = _stats.MaxClimbTime;
+                        _maxClimbTimer = _stats.MaxClimbTime;
                         _jumpRemaining = _stats.MaxJumpCount;
 
-                        if (isOnWall && _maxClimbTime > 0 && _verticalAxis != 0)
+                        if (isOnWall && _maxClimbTimer > 0 && _verticalAxis != 0)
                         {
                             _state = PlayerState.WallClimb;
                         }
@@ -182,7 +189,7 @@ namespace MadKnight
                         {
                             _state = PlayerState.Jumping;
                         }
-                        else if (isOnWall && _maxClimbTime > 0 && _verticalAxis != 0)
+                        else if (isOnWall && _maxClimbTimer > 0 && _verticalAxis != 0)
                         {
                             _state = PlayerState.WallClimb;
                         }
@@ -208,7 +215,7 @@ namespace MadKnight
                             {
                                 _state = PlayerState.Jumping;
                             }
-                            else if (isOnWall && _maxClimbTime > 0 && _verticalAxis != 0)
+                            else if (isOnWall && _maxClimbTimer > 0 && _verticalAxis != 0)
                             {
                                 _state = PlayerState.WallClimb;
                             }
@@ -234,7 +241,7 @@ namespace MadKnight
                         _jumpRemaining = _stats.MaxJumpCount - 1;
                         if (_verticalAxis != 0)
                         {
-                            _maxClimbTime -= Time.deltaTime;
+                            _maxClimbTimer -= Time.deltaTime;
                         }
 
                         if (_isOnFloor && _horizontalAxis != 0)
@@ -253,7 +260,7 @@ namespace MadKnight
                         {
                             _state = PlayerState.WallBounce;
                         }
-                        else if (_maxClimbTime <= 0)
+                        else if (_maxClimbTimer <= 0)
                         {
                             _state = PlayerState.Airborne;
                         }
@@ -272,7 +279,7 @@ namespace MadKnight
                         _climbOverTimer -= Time.deltaTime;
                         if (_climbOverFinished && !isOnLedge)
                         {
-                            _climbOverTimer = _climbTime;
+                            _climbOverTimer = _climbOverAnimationTime;
                             _climbOverFinished = false;
                             _state = PlayerState.GroundWork;
                             _rb.bodyType = RigidbodyType2D.Dynamic;
@@ -284,10 +291,20 @@ namespace MadKnight
                         if (_hasWallBounced && !isOnWall)
                         {
                             _state = PlayerState.Airborne;
-                            _maxClimbTime = _stats.MaxClimbTime;
+                            _maxClimbTimer = _stats.MaxClimbTime;
                             _airControl = false;
                             _hasWallBounced = false;
                             _anim.SetTrigger(nameof(PlayerAnimationEnum.TJump));
+                        }
+                    }
+                    break;
+                case PlayerState.Dead:
+                    {
+                        _deadTimer -= Time.deltaTime;
+                        if (_deadTimer <= 0)
+                        {
+                            var scene = SceneManager.GetActiveScene();
+                            SceneManager.LoadScene(scene.name);
                         }
                     }
                     break;
@@ -464,6 +481,8 @@ namespace MadKnight
                         }
                     }
                     break;
+                case PlayerState.Dead:
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -478,6 +497,15 @@ namespace MadKnight
                     transform.position.y,
                     Camera.main.transform.position.z
                 );
+            }
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (LayerMask.NameToLayer(nameof(LayerMaskEnum.Kill)) == collision.gameObject.layer)
+            {
+                _anim.SetTrigger(nameof(PlayerAnimationEnum.TDie));
+                _state = PlayerState.Dead;
             }
         }
 
