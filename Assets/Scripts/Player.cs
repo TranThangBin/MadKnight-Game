@@ -18,6 +18,7 @@ namespace MadKnight
             // WallSlide,
             // WallBounce,
             WallClimb,
+            ClimbOver,
         }
 
         [SerializeField] private PlayerStatsSO _stats;
@@ -27,6 +28,10 @@ namespace MadKnight
         [SerializeField] private Transform _groundCheck;
         [SerializeField] private Transform _wallCheckRight;
         [SerializeField] private Transform _wallCheckLeft;
+        [SerializeField] private Transform _ledgeCheckRight;
+        [SerializeField] private Transform _ledgeCheckLeft;
+        [SerializeField] private Vector2 _ledgeClimbOffset;
+        [SerializeField] private float _climbTime;
 
         private Rigidbody2D _rb;
         private Animator _anim;
@@ -45,6 +50,10 @@ namespace MadKnight
         private bool _isOnFloor;
         private bool _isOnWallRight;
         private bool _isOnWallLeft;
+        private bool _isOnLedgeRight;
+        private bool _isOnLedgeLeft;
+        private float _climbOverTimer;
+        private bool _climbOverFinished;
 
         private event UnityAction ResetGScale;
 
@@ -61,6 +70,7 @@ namespace MadKnight
 
             _state = PlayerState.GroundWork;
             _jumpRemaining = _stats.MaxJumpCount;
+            _climbOverTimer = _climbTime;
 
             var gScale = _rb.gravityScale;
             ResetGScale += () => _rb.gravityScale = gScale;
@@ -105,6 +115,10 @@ namespace MadKnight
                     nameof(PlayerAnimationEnum.BIsClimbing),
                     _state == PlayerState.WallClimb
             );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsClimbingOver),
+                    _state == PlayerState.ClimbOver
+            );
 
             var initState = _state;
 
@@ -113,8 +127,8 @@ namespace MadKnight
                 isCrouchClicked;
 
             var jumpAvailable = _jumpRemaining > 0;
-            var isFacingWall = _direction == 1 && _isOnWallRight ||
-                _direction == -1 && _isOnWallLeft;
+            var isOnWall = _isOnWallRight || _isOnWallLeft;
+            var isOnLedge = _isOnLedgeRight || _isOnLedgeLeft;
 
             isJumpClicked =
             isWallBounceClicked =
@@ -125,7 +139,7 @@ namespace MadKnight
             {
                 case PlayerState.GroundWork:
                     {
-                        if (isFacingWall && _verticalAxis != 0)
+                        if (isOnWall && _verticalAxis != 0)
                         {
                             _state = PlayerState.WallClimb;
                         }
@@ -140,6 +154,10 @@ namespace MadKnight
                         else if (!_isOnFloor)
                         {
                             _state = PlayerState.Airborne;
+                        }
+                        else if (isOnLedge)
+                        {
+                            _state = PlayerState.ClimbOver;
                         }
                     }
                     break;
@@ -159,7 +177,7 @@ namespace MadKnight
                         {
                             _state = PlayerState.Jumping;
                         }
-                        else if (isFacingWall && _verticalAxis != 0)
+                        else if (isOnWall && _verticalAxis != 0)
                         {
                             _state = PlayerState.WallClimb;
                         }
@@ -167,6 +185,10 @@ namespace MadKnight
                         {
                             _state = PlayerState.GroundWork;
                             _jumpRemaining = _stats.MaxJumpCount;
+                        }
+                        else if (isOnLedge)
+                        {
+                            _state = PlayerState.ClimbOver;
                         }
                     }
                     break;
@@ -182,7 +204,7 @@ namespace MadKnight
                             {
                                 _state = PlayerState.Jumping;
                             }
-                            else if (isFacingWall && _verticalAxis != 0)
+                            else if (isOnWall && _verticalAxis != 0)
                             {
                                 _state = PlayerState.WallClimb;
                             }
@@ -217,9 +239,31 @@ namespace MadKnight
                         {
                             _state = PlayerState.Airborne;
                         }
+                        else if (isOnLedge)
+                        {
+                            _state = PlayerState.ClimbOver;
+                        }
 
                         if (_state != PlayerState.WallClimb)
                         {
+                            ResetGScale.Invoke();
+                        }
+                    }
+                    break;
+                case PlayerState.ClimbOver:
+                    {
+                        if (_rb.gravityScale != 0)
+                        {
+                            _rb.gravityScale = 0;
+                            _rb.linearVelocity = Vector2.zero;
+                        }
+
+                        _climbOverTimer -= Time.deltaTime;
+                        if (_climbOverFinished)
+                        {
+                            _climbOverTimer = _climbTime;
+                            _climbOverFinished = false;
+                            _state = PlayerState.GroundWork;
                             ResetGScale.Invoke();
                         }
                     }
@@ -236,26 +280,67 @@ namespace MadKnight
 
         private void FixedUpdate()
         {
+            bool notLedge;
+
             _isOnFloor = Physics2D.OverlapCircle(
                     _groundCheck.position,
                     0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Ground))
             );
             _isOnCeil = Physics2D.OverlapCircle(
                     _ceilCheck.position,
                     0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Ground))
             );
-            _isOnWallRight = Physics2D.OverlapCircle(
-                    _wallCheckRight.position,
-                    0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
-            );
-            _isOnWallLeft = Physics2D.OverlapCircle(
-                    _wallCheckLeft.position,
-                    0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
-            );
+
+            if (_direction == 1)
+            {
+                _isOnWallLeft = false;
+                _isOnLedgeLeft = false;
+                _isOnWallRight = Physics2D.OverlapCircle(
+                        _wallCheckRight.position,
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+
+                notLedge = !Physics2D.OverlapCircle(
+                        new Vector2(
+                            _ledgeCheckRight.position.x,
+                            _ledgeCheckRight.position.y + 0.2f
+                        ),
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+                _isOnLedgeRight = notLedge && Physics2D.OverlapCircle(
+                        _ledgeCheckRight.position,
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+            }
+            else if (_direction == -1)
+            {
+                _isOnWallRight = false;
+                _isOnLedgeRight = false;
+                _isOnWallLeft = Physics2D.OverlapCircle(
+                        _wallCheckLeft.position,
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+
+                notLedge = !Physics2D.OverlapCircle(
+                        new Vector2(
+                            _ledgeCheckLeft.position.x,
+                            _ledgeCheckLeft.position.y + 0.2f
+                        ),
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+                _isOnLedgeLeft = notLedge && Physics2D.OverlapCircle(
+                        _ledgeCheckLeft.position,
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+            }
 
             HandleState();
         }
@@ -318,6 +403,18 @@ namespace MadKnight
                             _rb.linearVelocityX,
                             verticalYVelocity
                         );
+                    }
+                    break;
+                case PlayerState.ClimbOver:
+                    {
+                        if (!_climbOverFinished && _climbOverTimer <= 0)
+                        {
+                            _climbOverFinished = true;
+                            transform.position = new Vector2(
+                                    transform.position.x + _ledgeClimbOffset.x * _direction,
+                                    transform.position.y + _ledgeClimbOffset.y
+                            );
+                        }
                     }
                     break;
                 default:

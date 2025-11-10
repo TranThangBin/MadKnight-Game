@@ -8,5 +8,6 @@ namespace MadKnight.Enums
         TJump,
         BIsCrawling,
         BIsClimbing,
+        BIsClimbingOver,
     }
 }

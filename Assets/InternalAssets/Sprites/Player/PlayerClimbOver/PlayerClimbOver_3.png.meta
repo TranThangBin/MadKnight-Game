@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 05780bf29640a510483050340d84c7d3
+guid: 192f45b88ede76366b7ee4162930ec39
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8242964348442272616
-    second: PlayerClimb_7_0
+      213: 8025667132450103780
+    second: PlayerClimb_9_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,23 +100,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: PlayerClimb_7_0
+      name: PlayerClimb_9_0
       rect:
         serializedVersion: 2
-        x: 160
-        y: 2
-        width: 448
-        height: 694
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 125
+        y: 1
+        width: 471
+        height: 695
+      alignment: 9
+      pivot: {x: -0.21231422, y: -0.50359714}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8636c1dd664e46270800000000000000
-      internalID: 8242964348442272616
+      spriteID: 4e167333cb5e06f60800000000000000
+      internalID: 8025667132450103780
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: c84d74d98d9e9f18287761f035f6a1c9
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      PlayerClimb_7_0: 8242964348442272616
+      PlayerClimb_9_0: 8025667132450103780
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
