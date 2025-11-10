@@ -19,11 +19,19 @@ namespace MadKnight
 
         void Awake()
         {
-            manager ??= Minigame_Manager.Instance ?? FindObjectOfType<Minigame_Manager>(true);
+            if (Minigame_Manager.Instance)
+            {
+                manager = Minigame_Manager.Instance;
+            }
+            else
+            {
+                manager = FindFirstObjectByType<Minigame_Manager>(FindObjectsInactive.Include);
+            }
+
             if (!manager)
                 Debug.LogError("[PipesScript] manager NULL. Cần 1 Minigame_Manager active trong scene.");
             int randomIndex = Random.Range(0, rotations.Length);
-            transform.eulerAngles = new Vector3(0f, 0f, rotations[randomIndex]);    
+            transform.eulerAngles = new Vector3(0f, 0f, rotations[randomIndex]);
         }
 
         void Start()

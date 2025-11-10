@@ -2,101 +2,152 @@ using System;
 using MadKnight.Enums;
 using MadKnight.ScriptableObjects;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace MadKnight
 {
-    [RequireComponent(typeof(Rigidbody2D), typeof(Animator))]
+    [RequireComponent(typeof(Rigidbody2D), typeof(Animator), typeof(SpriteRenderer))]
     public class Player : MonoBehaviour
     {
         private enum PlayerState
         {
-            Idle,
-            Walking,
+            GroundWork,
             Crouching,
             Jumping,
             Airborne,
-            WallSlide,
-            WallBounce,
+            // WallSlide,
+            // WallBounce,
+            WallClimb,
+            ClimbOver,
         }
 
         [SerializeField] private PlayerStatsSO _stats;
 
         [SerializeField] private Collider2D _headCollider;
-        [SerializeField] private SpriteRenderer _srNormal;
-        [SerializeField] private SpriteRenderer _srCrouch;
         [SerializeField] private Transform _ceilCheck;
         [SerializeField] private Transform _groundCheck;
-        [SerializeField] private Transform _wallCheck;
+        [SerializeField] private Transform _wallCheckRight;
+        [SerializeField] private Transform _wallCheckLeft;
+        [SerializeField] private Transform _ledgeCheckRight;
+        [SerializeField] private Transform _ledgeCheckLeft;
+        [SerializeField] private Vector2 _ledgeClimbOffset;
+        [SerializeField] private float _climbTime;
 
         private Rigidbody2D _rb;
         private Animator _anim;
+        private SpriteRenderer _sr;
 
         private PlayerState _state;
         private PlayerState _prevState;
 
         private float _horizontalAxis;
+        private float _verticalAxis;
+        private int _direction;
         private int _jumpRemaining;
         private bool _hasJumped;
         private bool _hasWallBounced;
         private bool _isOnCeil;
         private bool _isOnFloor;
-        private bool _isOnWall;
+        private bool _isOnWallRight;
+        private bool _isOnWallLeft;
+        private bool _isOnLedgeRight;
+        private bool _isOnLedgeLeft;
+        private float _climbOverTimer;
+        private bool _climbOverFinished;
+
+        private event UnityAction ResetGScale;
+
+        private void OnDestroy()
+        {
+            ResetGScale = null;
+        }
 
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
             _anim = GetComponent<Animator>();
+            _sr = GetComponent<SpriteRenderer>();
 
-            _state = PlayerState.Idle;
+            _state = PlayerState.GroundWork;
             _jumpRemaining = _stats.MaxJumpCount;
+            _climbOverTimer = _climbTime;
+
+            var gScale = _rb.gravityScale;
+            ResetGScale += () => _rb.gravityScale = gScale;
         }
 
         private void Update()
         {
             _horizontalAxis = Input.GetAxis("Horizontal");
+            _verticalAxis = Input.GetAxis("Vertical");
 
-            _anim.SetFloat(
-                    nameof(PlayerAnimationEnum.FHorizontalVelocity),
-                    Mathf.Abs(_rb.linearVelocityX)
-            );
-
-            if (Camera.main)
+            if (_direction > 0 && _sr.flipX)
             {
-                Camera.main.transform.position = new Vector3(
-                        transform.position.x,
-                        transform.position.y+4,
-                        Camera.main.transform.position.z
-                );
+                _sr.flipX = false;
+            }
+            else if (_direction < 0 && !_sr.flipX)
+            {
+                _sr.flipX = true;
             }
 
             HandleStateTransition();
-            HandleAnimation();
         }
 
         private void HandleStateTransition()
         {
+            _anim.SetFloat(
+                    nameof(PlayerAnimationEnum.FHorizontalVelocity),
+                    _rb.linearVelocityX
+            );
+            _anim.SetFloat(
+                    nameof(PlayerAnimationEnum.FVerticalVelocity),
+                    _rb.linearVelocityY
+            );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsOnFloor),
+                    _isOnFloor
+            );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsCrawling),
+                    _state == PlayerState.Crouching
+            );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsClimbing),
+                    _state == PlayerState.WallClimb
+            );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsClimbingOver),
+                    _state == PlayerState.ClimbOver
+            );
+
             var initState = _state;
 
-            bool isJumpClicked, isWallBounceClicked, isCrouchClicked;
-            isJumpClicked = isWallBounceClicked = Input.GetButtonDown("Jump");
-            isCrouchClicked = Input.GetButton("Fire1");
+            bool isJumpClicked,
+                isWallBounceClicked,
+                isCrouchClicked;
 
-            var crouchable = _isOnFloor && isCrouchClicked;
-            var jumpAble = _jumpRemaining > 0 && isJumpClicked;
+            var jumpAvailable = _jumpRemaining > 0;
+            var isOnWall = _isOnWallRight || _isOnWallLeft;
+            var isOnLedge = _isOnLedgeRight || _isOnLedgeLeft;
+
+            isJumpClicked =
+            isWallBounceClicked =
+                Input.GetButtonDown("Jump");
+            isCrouchClicked = Input.GetButton("Fire1");
 
             switch (_state)
             {
-                case PlayerState.Idle:
+                case PlayerState.GroundWork:
                     {
-                        if (_horizontalAxis != 0)
+                        if (isOnWall && _verticalAxis != 0)
                         {
-                            _state = PlayerState.Walking;
+                            _state = PlayerState.WallClimb;
                         }
-                        else if (crouchable)
+                        else if (_isOnFloor && isCrouchClicked)
                         {
                             _state = PlayerState.Crouching;
                         }
-                        else if (jumpAble)
+                        else if (isJumpClicked && jumpAvailable)
                         {
                             _state = PlayerState.Jumping;
                         }
@@ -104,25 +155,9 @@ namespace MadKnight
                         {
                             _state = PlayerState.Airborne;
                         }
-                    }
-                    break;
-                case PlayerState.Walking:
-                    {
-                        if (_rb.linearVelocityX == 0)
+                        else if (isOnLedge)
                         {
-                            _state = PlayerState.Idle;
-                        }
-                        else if (crouchable)
-                        {
-                            _state = PlayerState.Crouching;
-                        }
-                        else if (jumpAble)
-                        {
-                            _state = PlayerState.Jumping;
-                        }
-                        else if (!_isOnFloor)
-                        {
-                            _state = PlayerState.Airborne;
+                            _state = PlayerState.ClimbOver;
                         }
                     }
                     break;
@@ -132,84 +167,104 @@ namespace MadKnight
                         {
                             _state = PlayerState.Airborne;
                             _hasJumped = false;
+                            _anim.SetTrigger(nameof(PlayerAnimationEnum.TJump));
                         }
                     }
                     break;
                 case PlayerState.Airborne:
                     {
-                        if (jumpAble && _prevState != PlayerState.WallBounce)
+                        if (isJumpClicked && jumpAvailable)
                         {
                             _state = PlayerState.Jumping;
                         }
+                        else if (isOnWall && _verticalAxis != 0)
+                        {
+                            _state = PlayerState.WallClimb;
+                        }
                         else if (_isOnFloor)
                         {
-                            if (_rb.linearVelocityX == 0)
-                            {
-                                _state = PlayerState.Idle;
-                            }
-                            else
-                            {
-                                _state = PlayerState.Walking;
-                            }
-
+                            _state = PlayerState.GroundWork;
                             _jumpRemaining = _stats.MaxJumpCount;
                         }
-                        else if (_isOnWall)
+                        else if (isOnLedge)
                         {
-                            _state = PlayerState.WallSlide;
+                            _state = PlayerState.ClimbOver;
                         }
                     }
                     break;
                 case PlayerState.Crouching:
-                    if (!_isOnCeil && !crouchable)
                     {
-                        if (_rb.linearVelocityX == 0)
+                        if (!_isOnCeil)
                         {
-                            _state = PlayerState.Idle;
+                            if (!_isOnFloor)
+                            {
+                                _state = PlayerState.Airborne;
+                            }
+                            else if (isJumpClicked && jumpAvailable)
+                            {
+                                _state = PlayerState.Jumping;
+                            }
+                            else if (isOnWall && _verticalAxis != 0)
+                            {
+                                _state = PlayerState.WallClimb;
+                            }
+                            else if (!isCrouchClicked)
+                            {
+                                _state = PlayerState.GroundWork;
+                            }
+                        }
+
+                        if (_state == PlayerState.Crouching)
+                        {
+                            _headCollider.enabled = false;
                         }
                         else
                         {
-                            _state = PlayerState.Walking;
-                        }
-                    }
-                    else if (!_isOnCeil && jumpAble)
-                    {
-                        _state = PlayerState.Jumping;
-                    }
-
-                    if (_state == PlayerState.Crouching)
-                    {
-                        _headCollider.enabled = false;
-                    }
-                    else
-                    {
-                        _headCollider.enabled = true;
-                    }
-
-                    break;
-                case PlayerState.WallSlide:
-                    {
-                        if (_isOnFloor)
-                        {
-                            _state = PlayerState.Idle;
-                            _jumpRemaining = _stats.MaxJumpCount;
-                        }
-                        else if (!_isOnWall)
-                        {
-                            _state = PlayerState.Airborne;
-                        }
-                        else if (isWallBounceClicked)
-                        {
-                            _state = PlayerState.WallBounce;
+                            _headCollider.enabled = true;
                         }
                     }
                     break;
-                case PlayerState.WallBounce:
+                case PlayerState.WallClimb:
                     {
-                        if (!_isOnWall && _hasWallBounced)
+                        if (_rb.gravityScale != 0)
+                        {
+                            _rb.gravityScale = 0;
+                        }
+
+                        if (_isOnFloor && _horizontalAxis != 0)
+                        {
+                            _state = PlayerState.GroundWork;
+                        }
+                        else if (!_isOnWallLeft && !_isOnWallRight && !_isOnFloor)
                         {
                             _state = PlayerState.Airborne;
-                            _hasWallBounced = false;
+                        }
+                        else if (isOnLedge)
+                        {
+                            _state = PlayerState.ClimbOver;
+                        }
+
+                        if (_state != PlayerState.WallClimb)
+                        {
+                            ResetGScale.Invoke();
+                        }
+                    }
+                    break;
+                case PlayerState.ClimbOver:
+                    {
+                        if (_rb.gravityScale != 0)
+                        {
+                            _rb.gravityScale = 0;
+                            _rb.linearVelocity = Vector2.zero;
+                        }
+
+                        _climbOverTimer -= Time.deltaTime;
+                        if (_climbOverFinished)
+                        {
+                            _climbOverTimer = _climbTime;
+                            _climbOverFinished = false;
+                            _state = PlayerState.GroundWork;
+                            ResetGScale.Invoke();
                         }
                     }
                     break;
@@ -223,45 +278,69 @@ namespace MadKnight
             }
         }
 
-        private void HandleAnimation()
-        {
-            switch (_state)
-            {
-                case PlayerState.Crouching:
-                    _srNormal.gameObject.SetActive(false);
-                    _srCrouch.gameObject.SetActive(true);
-                    break;
-                case PlayerState.Idle:
-                case PlayerState.Walking:
-                case PlayerState.Jumping:
-                case PlayerState.Airborne:
-                case PlayerState.WallSlide:
-                case PlayerState.WallBounce:
-                    _srNormal.gameObject.SetActive(true);
-                    _srCrouch.gameObject.SetActive(false);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
         private void FixedUpdate()
         {
+            bool notLedge;
+
             _isOnFloor = Physics2D.OverlapCircle(
                     _groundCheck.position,
                     0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Ground))
             );
             _isOnCeil = Physics2D.OverlapCircle(
                     _ceilCheck.position,
                     0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Ground))
             );
-            _isOnWall = Physics2D.OverlapCircle(
-                    _wallCheck.position,
-                    0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
-            );
+
+            if (_direction == 1)
+            {
+                _isOnWallLeft = false;
+                _isOnLedgeLeft = false;
+                _isOnWallRight = Physics2D.OverlapCircle(
+                        _wallCheckRight.position,
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+
+                notLedge = !Physics2D.OverlapCircle(
+                        new Vector2(
+                            _ledgeCheckRight.position.x,
+                            _ledgeCheckRight.position.y + 0.2f
+                        ),
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+                _isOnLedgeRight = notLedge && Physics2D.OverlapCircle(
+                        _ledgeCheckRight.position,
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+            }
+            else if (_direction == -1)
+            {
+                _isOnWallRight = false;
+                _isOnLedgeRight = false;
+                _isOnWallLeft = Physics2D.OverlapCircle(
+                        _wallCheckLeft.position,
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+
+                notLedge = !Physics2D.OverlapCircle(
+                        new Vector2(
+                            _ledgeCheckLeft.position.x,
+                            _ledgeCheckLeft.position.y + 0.2f
+                        ),
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+                _isOnLedgeLeft = notLedge && Physics2D.OverlapCircle(
+                        _ledgeCheckLeft.position,
+                        0.2f,
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                );
+            }
 
             HandleState();
         }
@@ -272,7 +351,7 @@ namespace MadKnight
             var wallBounceYForce = _stats.JumpForce * 1.2f;
 
             var horizontalXVelocity = _stats.Speed * _horizontalAxis;
-            var direction = transform.localScale.x;
+            var verticalYVelocity = _stats.Speed * _stats.WallClimbSpeedMultiplier * _verticalAxis;
 
             switch (_state)
             {
@@ -288,71 +367,73 @@ namespace MadKnight
                     }
                     break;
                 case PlayerState.Airborne:
-                case PlayerState.Walking:
-                    {
-                        if (_prevState != PlayerState.WallBounce)
-                        {
-                            if (horizontalXVelocity > 0 && transform.localScale.x != 1)
-                            {
-                                transform.localScale = new Vector2(1, transform.localScale.y);
-                            }
-                            else if (horizontalXVelocity < 0 && transform.localScale.x != -1)
-                            {
-                                transform.localScale = new Vector2(-1, transform.localScale.y);
-                            }
-
-                            _rb.linearVelocity = new Vector2(
-                                    Mathf.Lerp(
-                                        _rb.linearVelocityX,
-                                        horizontalXVelocity,
-                                        movementSmoothing
-                                    ),
-                                    _rb.linearVelocityY
-                            );
-                        }
-                    }
-                    break;
+                case PlayerState.GroundWork:
                 case PlayerState.Crouching:
                     {
-                        _rb.linearVelocity = new Vector2(
-                                horizontalXVelocity * _stats.CrouchSpeedMultiplier,
-                                -direction * _rb.linearVelocityY
-                        );
-                    }
-                    break;
-                case PlayerState.WallSlide:
-                    {
-                        _rb.linearVelocity = new Vector2(
-                                0,
-                                Mathf.Max(
-                                     _rb.linearVelocityY,
-                                    -_stats.WallSlideMaxSpeed
-                                )
-                        );
-                    }
-                    break;
-                case PlayerState.WallBounce:
-                    {
-                        if (!_hasWallBounced)
+                        if (_state == PlayerState.Crouching)
                         {
-                            _rb.AddForce(
-                                    new Vector2(
-                                       -direction * _stats.WallBounceForce,
-                                       wallBounceYForce
-                                    ),
-                                    ForceMode2D.Impulse
+                            horizontalXVelocity *= _stats.CrouchSpeedMultiplier;
+                        }
+
+                        if (horizontalXVelocity > 0 && _direction != 1)
+                        {
+                            _direction = 1;
+                        }
+                        else if (horizontalXVelocity < 0 && _direction != -1)
+                        {
+                            _direction = -1;
+                        }
+
+                        if (horizontalXVelocity != 0)
+                        {
+                            _rb.linearVelocity = new Vector2(
+                                Mathf.Lerp(
+                                    _rb.linearVelocityX,
+                                    horizontalXVelocity,
+                                    movementSmoothing
+                                ),
+                                _rb.linearVelocityY
                             );
-                            transform.localScale = new Vector2(-direction, transform.localScale.y);
-                            _hasWallBounced = true;
                         }
                     }
                     break;
-                case PlayerState.Idle:
+                case PlayerState.WallClimb:
+                    {
+                        _rb.linearVelocity = new Vector2(
+                            _rb.linearVelocityX,
+                            verticalYVelocity
+                        );
+                    }
+                    break;
+                case PlayerState.ClimbOver:
+                    {
+                        if (!_climbOverFinished && _climbOverTimer <= 0)
+                        {
+                            _climbOverFinished = true;
+                            transform.position = new Vector2(
+                                    transform.position.x + _ledgeClimbOffset.x * _direction,
+                                    transform.position.y + _ledgeClimbOffset.y
+                            );
+                        }
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
+
+        private void LateUpdate()
+        {
+            if (Camera.main)
+            {
+                Camera.main.transform.position = new Vector3(
+                    transform.position.x,
+                    transform.position.y,
+                    Camera.main.transform.position.z
+                );
+            }
+        }
+
         #region Save And Load
         public void Save(ref NPlayerSaveData data)
         {
@@ -362,10 +443,10 @@ namespace MadKnight
         public void Load(NPlayerSaveData data)
         {
             Debug.Log($"[Player] Loading position: {data.Position} (current: {transform.position})");
-            
+
             // Set position trực tiếp
             transform.position = data.Position;
-            
+
             // Nếu có Rigidbody2D, reset velocity và set position qua Rigidbody
             if (_rb != null)
             {
@@ -373,7 +454,7 @@ namespace MadKnight
                 _rb.position = data.Position;
                 Debug.Log($"[Player] Reset Rigidbody velocity and position");
             }
-            
+
             Debug.Log($"[Player] Position after load: {transform.position}");
         }
         #endregion
@@ -383,8 +464,8 @@ namespace MadKnight
 /// <summary>
 /// Simple Player Save Data for NSaveSystem
 /// </summary>
-[System.Serializable]
+[Serializable]
 public struct NPlayerSaveData
 {
-    public UnityEngine.Vector3 Position;
+    public Vector3 Position;
 }
