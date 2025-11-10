@@ -91,8 +91,8 @@ AnimatorStateMachine:
     m_Position: {x: 550, y: -20, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions:
-  - {fileID: 6804016746903860388}
   - {fileID: -3316455534227276931}
+  - {fileID: 6804016746903860388}
   - {fileID: 7209337578147517795}
   - {fileID: -8436833780768213012}
   - {fileID: 5489980268180851202}
@@ -323,6 +323,12 @@ AnimatorController:
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
   - m_Name: BIsClimbingOver
+    m_Type: 4
+    m_DefaultFloat: 0
+    m_DefaultInt: 0
+    m_DefaultBool: 0
+    m_Controller: {fileID: 9100000}
+  - m_Name: BIsAirborne
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
