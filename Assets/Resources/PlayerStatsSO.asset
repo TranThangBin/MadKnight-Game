@@ -15,6 +15,7 @@ MonoBehaviour:
   <Speed>k__BackingField: 15
   <JumpForce>k__BackingField: 24
   <MaxJumpCount>k__BackingField: 2
+  <MaxClimbTime>k__BackingField: 1.5
   <CrouchSpeedMultiplier>k__BackingField: 0.5
   <WallClimbSpeedMultiplier>k__BackingField: 0.7
   <WallSlideMaxSpeed>k__BackingField: 2

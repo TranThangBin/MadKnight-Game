@@ -53,6 +53,7 @@ namespace MadKnight
         private float _climbOverTimer;
         private bool _climbOverFinished;
         private bool _airControl;
+        private float _maxClimbTime;
 
         private event UnityAction ResetGScale;
 
@@ -139,8 +140,10 @@ namespace MadKnight
                 case PlayerState.GroundWork:
                     {
                         _airControl = true;
+                        _maxClimbTime = _stats.MaxClimbTime;
+                        _jumpRemaining = _stats.MaxJumpCount;
 
-                        if (isOnWall && _verticalAxis != 0)
+                        if (isOnWall && _maxClimbTime > 0 && _verticalAxis != 0)
                         {
                             _state = PlayerState.WallClimb;
                         }
@@ -179,14 +182,13 @@ namespace MadKnight
                         {
                             _state = PlayerState.Jumping;
                         }
-                        else if (isOnWall && _verticalAxis != 0)
+                        else if (isOnWall && _maxClimbTime > 0 && _verticalAxis != 0)
                         {
                             _state = PlayerState.WallClimb;
                         }
                         else if (_isOnFloor)
                         {
                             _state = PlayerState.GroundWork;
-                            _jumpRemaining = _stats.MaxJumpCount;
                         }
                         else if (isOnLedge)
                         {
@@ -206,7 +208,7 @@ namespace MadKnight
                             {
                                 _state = PlayerState.Jumping;
                             }
-                            else if (isOnWall && _verticalAxis != 0)
+                            else if (isOnWall && _maxClimbTime > 0 && _verticalAxis != 0)
                             {
                                 _state = PlayerState.WallClimb;
                             }
@@ -229,7 +231,11 @@ namespace MadKnight
                 case PlayerState.WallClimb:
                     {
                         _rb.gravityScale = 0;
-                        _jumpRemaining = _stats.MaxJumpCount;
+                        _jumpRemaining = _stats.MaxJumpCount - 1;
+                        if (_verticalAxis != 0)
+                        {
+                            _maxClimbTime -= Time.deltaTime;
+                        }
 
                         if (_isOnFloor && _horizontalAxis != 0)
                         {
@@ -246,6 +252,10 @@ namespace MadKnight
                         else if (isWallBounceClicked)
                         {
                             _state = PlayerState.WallBounce;
+                        }
+                        else if (_maxClimbTime <= 0)
+                        {
+                            _state = PlayerState.Airborne;
                         }
 
                         if (_state != PlayerState.WallClimb)
@@ -274,6 +284,7 @@ namespace MadKnight
                         if (_hasWallBounced && !isOnWall)
                         {
                             _state = PlayerState.Airborne;
+                            _maxClimbTime = _stats.MaxClimbTime;
                             _airControl = false;
                             _hasWallBounced = false;
                             _anim.SetTrigger(nameof(PlayerAnimationEnum.TJump));
@@ -378,13 +389,16 @@ namespace MadKnight
                             horizontalXVelocity *= _stats.CrouchSpeedMultiplier;
                         }
 
-                        if (horizontalXVelocity > 0 && _direction != 1)
+                        if (_airControl)
                         {
-                            _direction = 1;
-                        }
-                        else if (horizontalXVelocity < 0 && _direction != -1)
-                        {
-                            _direction = -1;
+                            if (horizontalXVelocity > 0 && _direction != 1)
+                            {
+                                _direction = 1;
+                            }
+                            else if (horizontalXVelocity < 0 && _direction != -1)
+                            {
+                                _direction = -1;
+                            }
                         }
 
                         if (horizontalXVelocity != 0 && _state == PlayerState.Airborne && _airControl)
@@ -446,7 +460,6 @@ namespace MadKnight
                                         wallBounceYForce
                             ), ForceMode2D.Impulse);
                             _direction *= -1;
-                            _jumpRemaining--;
                             _hasWallBounced = true;
                         }
                     }
