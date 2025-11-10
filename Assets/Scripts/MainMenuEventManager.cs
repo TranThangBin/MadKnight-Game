@@ -80,7 +80,7 @@ namespace MadKnight
         }
         private static void BtnOptionsClick()
         {
-            SceneManager.LoadScene(sceneName: "minigame_sence");
+            SceneManager.LoadScene(sceneName: "Options");
         }
 
         
