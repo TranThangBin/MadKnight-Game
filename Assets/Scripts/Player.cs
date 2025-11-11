@@ -126,6 +126,10 @@ namespace MadKnight
                     nameof(PlayerAnimationEnum.BIsClimbingOver),
                     _state == PlayerState.ClimbOver
             );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsDead),
+                    _state == PlayerState.Dead
+            );
 
             var initState = _state;
 
@@ -318,12 +322,12 @@ namespace MadKnight
             _isOnFloor = Physics2D.OverlapCircle(
                     _groundCheck.position,
                     0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Ground))
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
             );
             _isOnCeil = Physics2D.OverlapCircle(
                     _ceilCheck.position,
                     0.2f,
-                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Ground))
+                    LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
             );
 
             if (_direction == 1)
@@ -333,7 +337,7 @@ namespace MadKnight
                 _isOnWallRight = Physics2D.OverlapCircle(
                         _wallCheckRight.position,
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Wall))
                 );
 
                 _isOnLedgeRight = !Physics2D.OverlapCircle(
@@ -342,11 +346,11 @@ namespace MadKnight
                             _ledgeCheckRight.position.y + 0.3f
                         ),
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
                 ) && Physics2D.OverlapCircle(
                         _ledgeCheckRight.position,
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
                 );
             }
             else if (_direction == -1)
@@ -356,7 +360,7 @@ namespace MadKnight
                 _isOnWallLeft = Physics2D.OverlapCircle(
                         _wallCheckLeft.position,
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Wall))
                 );
 
                 _isOnLedgeLeft = !Physics2D.OverlapCircle(
@@ -365,11 +369,11 @@ namespace MadKnight
                             _ledgeCheckLeft.position.y + 0.3f
                         ),
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
                 ) && Physics2D.OverlapCircle(
                         _ledgeCheckLeft.position,
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
                 );
             }
 
@@ -504,7 +508,6 @@ namespace MadKnight
         {
             if (LayerMask.NameToLayer(nameof(LayerMaskEnum.Kill)) == collision.gameObject.layer)
             {
-                _anim.SetTrigger(nameof(PlayerAnimationEnum.TDie));
                 _state = PlayerState.Dead;
             }
         }

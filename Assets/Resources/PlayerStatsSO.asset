@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdc2cd0b9c1e0503a8decee40dec62b7, type: 3}
   m_Name: PlayerStatsSO
   m_EditorClassIdentifier: MadKnight::MadKnight.ScriptableObjects.PlayerStatsSO
-  <Speed>k__BackingField: 15
-  <JumpForce>k__BackingField: 24
+  <Speed>k__BackingField: 14
+  <JumpForce>k__BackingField: 20
   <MaxJumpCount>k__BackingField: 2
   <MaxClimbTime>k__BackingField: 1.5
   <CrouchSpeedMultiplier>k__BackingField: 0.5

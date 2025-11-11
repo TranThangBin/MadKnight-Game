@@ -17,7 +17,8 @@ Deprecated
 # Node artifact files
 node_modules/
 dist/
-
+Assets/ExternalAssets/SFX/Horror SFX Free
+Assets/ExternalAssets/SFX/Horror SFX Free.zip
 # Compiled Java class files
 *.class
 
