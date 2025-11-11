@@ -126,6 +126,10 @@ namespace MadKnight
                     nameof(PlayerAnimationEnum.BIsClimbingOver),
                     _state == PlayerState.ClimbOver
             );
+            _anim.SetBool(
+                    nameof(PlayerAnimationEnum.BIsDead),
+                    _state == PlayerState.Dead
+            );
 
             var initState = _state;
 
@@ -346,7 +350,7 @@ namespace MadKnight
                 ) && Physics2D.OverlapCircle(
                         _ledgeCheckRight.position,
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
                 );
             }
             else if (_direction == -1)
@@ -369,7 +373,7 @@ namespace MadKnight
                 ) && Physics2D.OverlapCircle(
                         _ledgeCheckLeft.position,
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
                 );
             }
 
@@ -504,7 +508,6 @@ namespace MadKnight
         {
             if (LayerMask.NameToLayer(nameof(LayerMaskEnum.Kill)) == collision.gameObject.layer)
             {
-                _anim.SetTrigger(nameof(PlayerAnimationEnum.TDie));
                 _state = PlayerState.Dead;
             }
         }

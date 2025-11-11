@@ -46,6 +46,9 @@ AnimatorStateTransition:
   - m_ConditionMode: 4
     m_ConditionEvent: FVerticalVelocity
     m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: BIsDead
+    m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -5630614531230506886}
   m_Solo: 0
@@ -252,7 +255,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: TDie
+    m_ConditionEvent: BIsDead
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -8493334481180296209}
@@ -278,6 +281,9 @@ AnimatorStateTransition:
   m_Conditions:
   - m_ConditionMode: 1
     m_ConditionEvent: TJump
+    m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: BIsDead
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -6026264449044315423}
@@ -389,8 +395,8 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: TDie
-    m_Type: 9
+  - m_Name: BIsDead
+    m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
@@ -536,6 +542,9 @@ AnimatorStateTransition:
   - m_ConditionMode: 1
     m_ConditionEvent: BIsClimbingOver
     m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: BIsDead
+    m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 6528193392797004129}
   m_Solo: 0
@@ -613,6 +622,9 @@ AnimatorStateTransition:
   - m_ConditionMode: 1
     m_ConditionEvent: BIsCrawling
     m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: BIsDead
+    m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 4872105815802432771}
   m_Solo: 0
@@ -637,6 +649,9 @@ AnimatorStateTransition:
   m_Conditions:
   - m_ConditionMode: 1
     m_ConditionEvent: BIsClimbing
+    m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: BIsDead
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -7060115698398929321}

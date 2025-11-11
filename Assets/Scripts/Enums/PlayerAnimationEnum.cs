@@ -9,6 +9,6 @@ namespace MadKnight.Enums
         BIsCrawling,
         BIsClimbing,
         BIsClimbingOver,
-        TDie,
+        BIsDead,
     }
 }
