@@ -12,6 +12,9 @@ namespace MadKnight
         [SerializeField] private Button _btnContinue; 
         [SerializeField] private Button _btnOptions;
         [SerializeField] private Button _btnQuit;
+
+        [Header("Popup")]
+        [SerializeField] private OptionPopup _popupOptions;
  
 
         private void Start()
@@ -78,9 +81,14 @@ namespace MadKnight
                 Debug.LogError("Không thể load file save!");
             }
         }
-        private static void BtnOptionsClick()
+        private void BtnOptionsClick()
         {
-            SceneManager.LoadScene(sceneName: "Options");
+            if (_popupOptions == null)
+            {
+                Debug.LogError("Chưa gán PopupOptions vào MainMenuEventManager");
+                return;
+            }
+            _popupOptions.Open();
         }
 
         
