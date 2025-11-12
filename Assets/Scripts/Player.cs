@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using MadKnight.Enums;
 using MadKnight.ScriptableObjects;
 using UnityEngine;
@@ -24,7 +25,8 @@ namespace MadKnight
 
         [SerializeField] private PlayerStatsSO _stats;
 
-        [SerializeField] private Collider2D _headCollider;
+        [SerializeField] private Collider2D _standCollider;
+        [SerializeField] private Collider2D _crouchCollider;
         [SerializeField] private Transform _ceilCheck;
         [SerializeField] private Transform _groundCheck;
         [SerializeField] private Transform _wallCheckRight;
@@ -51,6 +53,7 @@ namespace MadKnight
         private bool _isOnFloor;
         private bool _isOnWallRight;
         private bool _isOnWallLeft;
+        private bool _isContactingWall;
         private bool _isOnLedgeRight;
         private bool _isOnLedgeLeft;
         private float _climbOverTimer;
@@ -88,14 +91,25 @@ namespace MadKnight
             _horizontalAxis = Input.GetAxis("Horizontal");
             _verticalAxis = Input.GetAxis("Vertical");
 
-            if (_direction > 0 && _sr.flipX)
+            if (_direction > 0)
             {
                 _sr.flipX = false;
             }
-            else if (_direction < 0 && !_sr.flipX)
+            else if (_direction < 0)
             {
                 _sr.flipX = true;
             }
+
+            if (_state == PlayerState.Crouching)
+            {
+                _crouchCollider.enabled = true;
+            }
+            else
+            {
+                _crouchCollider.enabled = false;
+            }
+
+            _standCollider.enabled = !_crouchCollider.enabled;
 
             HandleStateTransition();
         }
@@ -228,15 +242,6 @@ namespace MadKnight
                                 _state = PlayerState.GroundWork;
                             }
                         }
-
-                        if (_state == PlayerState.Crouching)
-                        {
-                            _headCollider.enabled = false;
-                        }
-                        else
-                        {
-                            _headCollider.enabled = true;
-                        }
                     }
                     break;
                 case PlayerState.WallClimb:
@@ -334,11 +339,14 @@ namespace MadKnight
             {
                 _isOnWallLeft = false;
                 _isOnLedgeLeft = false;
-                _isOnWallRight = Physics2D.OverlapCircle(
+
+                var colliders = Physics2D.OverlapCircleAll(
                         _wallCheckRight.position,
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Wall))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
                 );
+                _isOnWallRight = colliders.Any(cld => cld.gameObject.layer == LayerMask.NameToLayer(nameof(LayerMaskEnum.Wall)));
+                _isContactingWall = colliders.Length > 0;
 
                 _isOnLedgeRight = !Physics2D.OverlapCircle(
                         new Vector2(
@@ -357,11 +365,14 @@ namespace MadKnight
             {
                 _isOnWallRight = false;
                 _isOnLedgeRight = false;
-                _isOnWallLeft = Physics2D.OverlapCircle(
+
+                var colliders = Physics2D.OverlapCircleAll(
                         _wallCheckLeft.position,
                         0.2f,
-                        LayerMask.GetMask(nameof(LayerMaskEnum.Wall))
+                        LayerMask.GetMask(nameof(LayerMaskEnum.Ground), nameof(LayerMaskEnum.Wall))
                 );
+                _isOnWallLeft = colliders.Any(cld => cld.gameObject.layer == LayerMask.NameToLayer(nameof(LayerMaskEnum.Wall)));
+                _isContactingWall = colliders.Length > 0;
 
                 _isOnLedgeLeft = !Physics2D.OverlapCircle(
                         new Vector2(
@@ -412,17 +423,19 @@ namespace MadKnight
 
                         if (_airControl)
                         {
-                            if (horizontalXVelocity > 0 && _direction != 1)
+                            if (horizontalXVelocity > 0)
                             {
                                 _direction = 1;
                             }
-                            else if (horizontalXVelocity < 0 && _direction != -1)
+                            else if (horizontalXVelocity < 0)
                             {
                                 _direction = -1;
                             }
                         }
 
-                        if (horizontalXVelocity != 0 && _state == PlayerState.Airborne && _airControl)
+                        if (horizontalXVelocity != 0 &&
+                                _state == PlayerState.Airborne &&
+                                _airControl)
                         {
                             _rb.linearVelocity = new Vector2(
                                 Mathf.Lerp(
@@ -435,6 +448,7 @@ namespace MadKnight
                         }
 
                         if (horizontalXVelocity != 0 &&
+                            !_isContactingWall &&
                             (
                                 _state != PlayerState.Airborne ||
                                 _state == PlayerState.Airborne && _airControl
