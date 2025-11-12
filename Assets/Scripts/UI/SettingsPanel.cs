@@ -217,6 +217,23 @@ namespace MadKnight.UI
             // Graphics
             if (qualityDropdown != null)
                 qualityDropdown.value = currentSettings.qualityLevel;
+            
+            // Resolution - tìm index phù hợp với resolution đã lưu
+            if (resolutionDropdown != null && resolutions != null && resolutions.Length > 0)
+            {
+                int savedResIndex = 0;
+                for (int i = 0; i < resolutions.Length; i++)
+                {
+                    if (resolutions[i].width == currentSettings.resolutionWidth &&
+                        resolutions[i].height == currentSettings.resolutionHeight)
+                    {
+                        savedResIndex = i;
+                        break;
+                    }
+                }
+                resolutionDropdown.value = savedResIndex;
+            }
+            
             if (fullscreenToggle != null)
                 fullscreenToggle.isOn = currentSettings.fullscreen;
             if (vsyncToggle != null)
@@ -299,8 +316,17 @@ namespace MadKnight.UI
         
         private void OnResolutionChanged(int index)
         {
+            if (resolutions == null || index < 0 || index >= resolutions.Length)
+            {
+                Debug.LogError($"[SettingsPanel] Invalid resolution index: {index}");
+                return;
+            }
+            
             Resolution resolution = resolutions[index];
-            Screen.SetResolution(resolution.width, resolution.height, Screen.fullScreen);
+            Debug.Log($"[SettingsPanel] Changing resolution to {resolution.width}x{resolution.height}");
+            
+            // Áp dụng resolution ngay lập tức
+            Screen.SetResolution(resolution.width, resolution.height, currentSettings.fullscreen);
             
             // Lưu vào settings
             currentSettings.resolutionWidth = resolution.width;
@@ -310,8 +336,24 @@ namespace MadKnight.UI
         
         private void OnFullscreenChanged(bool value)
         {
+            Debug.Log($"[SettingsPanel] Changing fullscreen to: {value}");
+            
             currentSettings.fullscreen = value;
-            Screen.fullScreen = value;
+            
+            // Áp dụng fullscreen ngay lập tức với resolution hiện tại
+            if (currentSettings.resolutionWidth > 0 && currentSettings.resolutionHeight > 0)
+            {
+                Screen.SetResolution(
+                    currentSettings.resolutionWidth, 
+                    currentSettings.resolutionHeight, 
+                    value
+                );
+            }
+            else
+            {
+                // Nếu resolution chưa được set, dùng resolution hiện tại
+                Screen.fullScreen = value;
+            }
             
             // Auto save
             currentSettings.Save();
@@ -451,8 +493,27 @@ namespace MadKnight.UI
         
         private void OnApplyClicked()
         {
-            // Settings đã được auto-save khi thay đổi
-            // Chỉ cần đóng panel
+            // Đảm bảo tất cả settings được áp dụng
+            Debug.Log("[SettingsPanel] Applying all settings...");
+            
+            // Áp dụng resolution và fullscreen một lần nữa
+            if (currentSettings.resolutionWidth > 0 && currentSettings.resolutionHeight > 0)
+            {
+                Screen.SetResolution(
+                    currentSettings.resolutionWidth,
+                    currentSettings.resolutionHeight,
+                    currentSettings.fullscreen
+                );
+            }
+            else
+            {
+                Screen.fullScreen = currentSettings.fullscreen;
+            }
+            
+            // Áp dụng tất cả các settings khác
+            currentSettings.ApplyAll();
+            currentSettings.Save();
+            
             Debug.Log("Settings applied and saved!");
             Hide();
         }

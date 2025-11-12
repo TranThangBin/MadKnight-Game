@@ -655,7 +655,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb16a86ffd0cfbb468241797d6e94e2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MadKnight::SkipBtnController
-  sceneToLoad: MainMenu2
+  sceneToLoad: MainMenu3
   fadeSpeed: 2
 --- !u!225 &400675003
 CanvasGroup:
@@ -1016,7 +1016,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Thank for playing
+  m_text: Thank for playing our demo
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 15a2a0a6ba072a6fca58a1e68c9b446a, type: 2}
   m_sharedMaterial: {fileID: 4199601981525374261, guid: 15a2a0a6ba072a6fca58a1e68c9b446a, type: 2}
