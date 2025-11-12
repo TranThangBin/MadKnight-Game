@@ -13,12 +13,19 @@ namespace MadKnight
         [SerializeField] private Button btnRestart;
         [SerializeField] private Button btnControl;
         [SerializeField] private Button btnLanguage;
-        [SerializeField] private Button btnkeysMap;
+        [SerializeField] private Button btnKeysMap;
         [SerializeField] private Button btnQuit;
 
         [Header("Buttons (Confirm)")]
         [SerializeField] private Button btnYes;
         [SerializeField] private Button btnNo;
+
+        [Header("Back Button (global)")]
+        [SerializeField] private Button btnBack;
+
+        [Header("Popup Root")]
+        [SerializeField] private CanvasGroup popupRoot;      // gốc popup (CanvasGroup)
+        [SerializeField] private bool startOpened = true;    // false nếu muốn ẩn lúc bắt đầu
 
         [Header("Panels")]
         [SerializeField] private CanvasGroup panelMain;
@@ -30,6 +37,11 @@ namespace MadKnight
 
         private Dictionary<string, CanvasGroup> panels;
         private Selectable lastSelected;
+
+        private readonly Stack<string> history = new Stack<string>();
+        private string currentKey = null;
+        private bool isOpen = false;
+        private bool started = false;
 
         private void Awake()
         {
@@ -43,54 +55,140 @@ namespace MadKnight
                 { "Quit",     panelQuit     },
             };
 
+            // đảm bảo panel có mặt trong hierarchy để lấy Selectable
             foreach (var kv in panels)
                 if (kv.Value != null && !kv.Value.gameObject.activeSelf)
                     kv.Value.gameObject.SetActive(true);
+
+            if (popupRoot && !popupRoot.gameObject.activeSelf)
+                popupRoot.gameObject.SetActive(true);
+        }
+
+        // Khi popup được bật lại bằng SetActive(true) sau lần đầu
+        private void OnEnable()
+        {
+            if (!started) return;   // tránh chạy trước Start lần đầu
+            OpenPopup();            // tự về Main khi mở lại
         }
 
         private void Start()
         {
-            btnAudio   .onClick.AddListener(() => Show("Audio",    btnAudio));
-            btnRestart .onClick.AddListener(RestartScene);
-            btnControl .onClick.AddListener(() => Show("Control",  btnControl));
-            btnLanguage.onClick.AddListener(() => Show("Language", btnLanguage));
-            btnkeysMap.onClick.AddListener(() => Show("KeysMap", btnkeysMap));
-            btnQuit    .onClick.AddListener(() => Show("Quit",     btnQuit));
+            if (btnAudio)    btnAudio.onClick.AddListener(() => Show("Audio",    btnAudio));
+            if (btnRestart)  btnRestart.onClick.AddListener(RestartScene);
+            if (btnControl)  btnControl.onClick.AddListener(() => Show("Control",  btnControl));
+            if (btnLanguage) btnLanguage.onClick.AddListener(() => Show("Language", btnLanguage));
+            if (btnKeysMap)  btnKeysMap.onClick.AddListener(() => Show("KeysMap",  btnKeysMap));
+            if (btnQuit)     btnQuit.onClick.AddListener(() => Show("Quit",     btnQuit));
 
-            btnYes     .onClick.AddListener(QuitGame);
-            btnNo      .onClick.AddListener(() => Show("Main",btnNo));
+            if (btnYes) btnYes.onClick.AddListener(QuitGame);
+            if (btnNo)  btnNo .onClick.AddListener(ClosePopup);
+            if (btnBack) btnBack.onClick.AddListener(Back);
 
-            Show("Main", btnAudio);
+            started = true;
+
+            if (startOpened) OpenPopup();
+            else             ClosePopup();
         }
 
-        private void Show(string key, Selectable focus)
+        private void Update()
         {
+            if (Input.GetKeyDown(KeyCode.Escape))
+                Back();
+        }
+
+        // mở 1 panel, mặc định đẩy panel hiện tại vào history
+        private void Show(string key, Selectable focus, bool pushHistory = true)
+        {
+            if (!isOpen) OpenPopup(); // nếu đang đóng mà gọi Show, tự mở
+
             foreach (var kv in panels) SetVisible(kv.Value, false);
 
             if (!panels.TryGetValue(key, out var cg) || cg == null)
             {
                 Debug.LogWarning($"Panel '{key}' không tồn tại. Trở về Main.");
-                SetVisible(panelMain, true);
-                TryFocus(lastSelected);
+                GoMain();
                 return;
             }
 
+            if (pushHistory && !string.IsNullOrEmpty(currentKey))
+                history.Push(currentKey);
+
             SetVisible(cg, true);
+            currentKey = key;
 
             if (focus != null) lastSelected = focus;
-
             var first = cg.GetComponentInChildren<Selectable>(true);
-            var target = first != null ? first : lastSelected;
+            TryFocus(first != null ? first : lastSelected);
+        }
 
-            TryFocus(target);
+        // Back: ở Main thì đóng popup, còn lại lùi 1 panel
+        public void Back()
+        {
+            if (!isOpen)
+            {
+                OpenPopup();
+                return;
+            }
+
+            if (currentKey == "Main" || history.Count == 0)
+            {
+                ClosePopup();
+                return;
+            }
+
+            var prev = history.Pop();
+            Show(prev, null, pushHistory:false);
+        }
+
+        // mở popup và auto vào Main
+        public void OpenPopup()
+        {
+            if (popupRoot) SetVisible(popupRoot, true);
+            else gameObject.SetActive(true);
+
+            GoMain();
+            isOpen = true;
+        }
+
+        // gom logic về Main
+        private void GoMain()
+        {
+            foreach (var kv in panels) SetVisible(kv.Value, false);
+            SetVisible(panelMain, true);
+
+            history.Clear();
+            currentKey = "Main";
+
+            var first = panelMain ? panelMain.GetComponentInChildren<Selectable>(true) : null;
+            lastSelected = first ? first : btnAudio;
+            TryFocus(lastSelected);
+        }
+
+        // đóng popup hoàn toàn
+        public void ClosePopup()
+        {
+            foreach (var kv in panels) SetVisible(kv.Value, false);
+
+            if (popupRoot) SetVisible(popupRoot, false);
+            else gameObject.SetActive(false);
+
+            currentKey = null;
+            history.Clear();
+            isOpen = false;
+        }
+
+        // tiện cho input ngoài
+        public void TogglePopup()
+        {
+            if (isOpen) ClosePopup();
+            else OpenPopup();
         }
 
         private static void SetVisible(CanvasGroup cg, bool v)
         {
             if (!cg) return;
-
-            cg.gameObject.SetActive(v);      
-            cg.alpha = v ? 1f : 0f;             
+            cg.gameObject.SetActive(v);
+            cg.alpha = v ? 1f : 0f;
             cg.interactable = v;
             cg.blocksRaycasts = v;
         }
