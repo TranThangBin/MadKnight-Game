@@ -2,44 +2,47 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
-// Thêm CanvasGroup vào object để fade cả nút + text
 [RequireComponent(typeof(CanvasGroup))]
-public class SkipBtnController : MonoBehaviour,
-    IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+public class SkipBtnController : MonoBehaviour, IPointerClickHandler
 {
-    public string sceneToLoad;       // Scene muốn chuyển tới
-    public float fadeSpeed = 2f;     // Tốc độ tăng/giảm alpha
+    public string sceneToLoad;
+    public float fadeSpeed = 2f;      // tốc độ fade
+    public float holdTime = 0.2f;     // thời gian sau khi di chuyển chuột thì nút còn sáng
 
-    private CanvasGroup cg;          // Thay Image bằng CanvasGroup
-    private bool isHovering = false;
+    private CanvasGroup cg;
+    private Vector3 lastMousePos;
+    private float lastMoveTime;
 
     void Start()
     {
         cg = GetComponent<CanvasGroup>();
-
-        // Khởi đầu ẩn hoàn toàn
         cg.alpha = 0f;
-        // Có thể để click khi ẩn, nhưng ta sẽ chặn bằng alpha check
-        // Nếu muốn chặn luôn, mở 2 dòng dưới:
-        // cg.interactable = false;
-        // cg.blocksRaycasts = true; // vẫn nhận raycast để hover/hiện dần
+
+        lastMousePos = Input.mousePosition;
+        lastMoveTime = -999f;  // để lúc start nó không hiện
     }
 
     void Update()
     {
-        float target = isHovering ? 1f : 0f;
-        cg.alpha = Mathf.MoveTowards(cg.alpha, target, Time.deltaTime * fadeSpeed);
+        // Kiểm tra xem chuột có di chuyển không
+        if (Input.mousePosition != lastMousePos)
+        {
+            lastMousePos = Input.mousePosition;
+            lastMoveTime = Time.time;   // vừa di chuyển → đánh dấu
+        }
 
-        // (tuỳ chọn) chỉ cho phép click khi đã hiện rõ
-        // cg.interactable = cg.alpha > 0.95f;
+        // Nếu vừa di chuyển trong "holdTime" → hiện nút
+        bool shouldShow = (Time.time - lastMoveTime) < holdTime;
+
+        float targetAlpha = shouldShow ? 1f : 0f;
+        cg.alpha = Mathf.MoveTowards(cg.alpha, targetAlpha, Time.deltaTime * fadeSpeed);
     }
 
-    public void OnPointerEnter(PointerEventData _) => isHovering = true;
-    public void OnPointerExit (PointerEventData _) => isHovering = false;
-
-    public void OnPointerClick(PointerEventData _)
+    public void OnPointerClick(PointerEventData eventData)
     {
         if (cg.alpha > 0.9f)
+        {
             SceneManager.LoadScene(sceneToLoad);
+        }
     }
 }

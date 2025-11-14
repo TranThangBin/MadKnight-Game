@@ -1,10 +1,8 @@
 using System;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections;
 using MadKnight.Save;
-using UnityEngine.Video;
 
 namespace MadKnight.UI
 {
@@ -29,6 +27,7 @@ namespace MadKnight.UI
         [SerializeField] private MenuButton settingsButton;
         [SerializeField] private MenuButton creditsButton;
         [SerializeField] private MenuButton exitButton;
+        [SerializeField] private SceneLoadingController sceneLoadingController;
 
         [Header("Animation Settings")] [SerializeField]
         private float titleFadeInDuration = 2f;
@@ -47,9 +46,6 @@ namespace MadKnight.UI
 
         [SerializeField] private float
             crossfadeDuration = 2f; // Thời gian chuyển từ intro sang loop
-
-        [SerializeField] private VideoPlayer loading;
-        [SerializeField] private float minLoadingTime;
 
         private AudioSource introMusicSource;
         private AudioSource backgroundMusicSource;
@@ -324,8 +320,29 @@ namespace MadKnight.UI
             SaveSystem.CreateAutoSave();
             Debug.Log("[MainMenuUI] Auto save created, loading Level01...");
 
-            // Fade out và load scene
-            StartCoroutine(LoadSceneWithFade("Level01"));
+            if (sceneLoadingController == null)
+            {
+                Debug.LogError("[MainMenuUI] SceneLoadingController missing!");
+                return;
+            }
+
+            sceneLoadingController.LoadScene("Stage");
+        }
+        public void OnNewGameClick1()
+        {
+            Debug.Log("[MainMenuUI] New Game clicked!");
+
+            // Tạo auto save mới (luôn tạo mới khi New Game)
+            SaveSystem.CreateAutoSave();
+            Debug.Log("[MainMenuUI] Auto save created, loading Level01...");
+
+            if (sceneLoadingController == null)
+            {
+                Debug.LogError("[MainMenuUI] SceneLoadingController missing!");
+                return;
+            }
+
+            sceneLoadingController.LoadScene("Level01");
         }
 
         public void OnContinueClick()
@@ -379,10 +396,14 @@ namespace MadKnight.UI
 
         public void OnCreditsClick()
         {
-            if (creditsPanel != null)
+            Debug.Log("[MainMenuUI] Credits clicked, loading DemoEnd scene...");
+            if (sceneLoadingController == null)
             {
-                StartCoroutine(TogglePanel(creditsPanel));
+                Debug.LogError("[MainMenuUI] SceneLoadingController missing!");
+                return;
             }
+
+            sceneLoadingController.LoadScene("DemoEnd");
         }
 
         public void OnExitClick()
@@ -412,9 +433,20 @@ namespace MadKnight.UI
             panel.alpha = targetAlpha;
         }
 
-        private IEnumerator LoadSceneWithFade(string sceneName)
+        private IEnumerator ExitGame()
         {
-            // Fade out tất cả
+            yield return StartCoroutine(FadeOutUI());
+
+            // Quit
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
+        public IEnumerator FadeOutUI()
+        {
             float duration = 1f;
             float elapsed = 0f;
 
@@ -429,45 +461,6 @@ namespace MadKnight.UI
 
                 yield return null;
             }
-
-            // Load scene
-            var loadingTime = minLoadingTime;
-            var op = SceneManager.LoadSceneAsync(sceneName);
-            if (op == null)
-            {
-                throw new NullReferenceException();
-            }
-
-            op.allowSceneActivation = false;
-            loading.gameObject.SetActive(true);
-            loading.Play();
-
-            while (op.progress < 0.9f)
-            {
-                loadingTime -= Time.deltaTime;
-                yield return null;
-            }
-
-            while (loadingTime > 0)
-            {
-                loadingTime -= Time.deltaTime;
-                yield return null;
-            }
-
-            op.allowSceneActivation = true;
-        }
-
-        private IEnumerator ExitGame()
-        {
-            // Fade out
-            yield return StartCoroutine(LoadSceneWithFade(""));
-
-            // Quit
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
         }
     }
 }

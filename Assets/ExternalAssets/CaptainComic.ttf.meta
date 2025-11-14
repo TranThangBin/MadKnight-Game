@@ -1,0 +1,24 @@
+fileFormatVersion: 2
+guid: 77170571bc2f37a41bce8da80fb9cd07
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Captain Comic
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 8217113746964594899bdfc8ada64e66, type: 3}
+  - {fileID: 12800000, guid: 3bfaab42e6b25f5488d948a54b32c123, type: 3}
+  - {fileID: 12800000, guid: f8df7995c8ffe6447b21095a8cbe8663, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -103,13 +103,13 @@ TextureImporter:
       name: Cay to ( leo)_0
       rect:
         serializedVersion: 2
-        x: 37
-        y: 23
-        width: 1986
-        height: 3525
+        x: 0
+        y: 0
+        width: 2048
+        height: 3578
       alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 1531, w: 0}
       customData: 
       outline: []
       physicsShape: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: c6b9453b796c09b47b3b7e683e7bee73
     internalID: 0
     vertices: []
     indices: 

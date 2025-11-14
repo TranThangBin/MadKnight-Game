@@ -657,6 +657,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: MadKnight::SkipBtnController
   sceneToLoad: MainMenu3
   fadeSpeed: 2
+  holdTime: 0.2
 --- !u!225 &400675003
 CanvasGroup:
   m_ObjectHideFlags: 0
